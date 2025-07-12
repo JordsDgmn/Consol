@@ -1,0 +1,61 @@
+digraph consol_erd {
+	rankdir=LR size=10
+	User [fillcolor=cyan shape=box style=filled]
+	Note [fillcolor=cyan shape=box style=filled]
+	Session [fillcolor=cyan shape=box style=filled]
+	SessionTrial [fillcolor=cyan shape=box style=filled]
+	Streak [fillcolor=cyan shape=box style=filled]
+	PerformanceHistory [fillcolor=cyan shape=box style=filled]
+	User_Note_Has [label=Has fillcolor=deepskyblue3 shape=diamond style=filled]
+	User -> User_Note_Has
+	User_Note_Has -> Note
+	User_Session_Starts [label=Starts fillcolor=deepskyblue3 shape=diamond style=filled]
+	User -> User_Session_Starts
+	User_Session_Starts -> Session
+	User_Streak_Achieves [label=Achieves fillcolor=deepskyblue3 shape=diamond style=filled]
+	User -> User_Streak_Achieves
+	User_Streak_Achieves -> Streak
+	User_PerformanceHistory_Logs [label=Logs fillcolor=deepskyblue3 shape=diamond style=filled]
+	User -> User_PerformanceHistory_Logs
+	User_PerformanceHistory_Logs -> PerformanceHistory
+	"Note_Session_Is Used In" [label="Is Used In" fillcolor=deepskyblue3 shape=diamond style=filled]
+	Note -> "Note_Session_Is Used In"
+	"Note_Session_Is Used In" -> Session
+	Session_SessionTrial_Contains [label=Contains fillcolor=deepskyblue3 shape=diamond style=filled]
+	Session -> Session_SessionTrial_Contains
+	Session_SessionTrial_Contains -> SessionTrial
+	Session_Streak_Highlights [label=Highlights fillcolor=deepskyblue3 shape=diamond style=filled]
+	Session -> Session_Streak_Highlights
+	Session_Streak_Highlights -> Streak
+	Session_PerformanceHistory_References [label=References fillcolor=deepskyblue3 shape=diamond style=filled]
+	Session -> Session_PerformanceHistory_References
+	Session_PerformanceHistory_References -> PerformanceHistory
+	User_username [label=username fillcolor=crimson fontcolor=white shape=ellipse style=filled]
+	User_username -> User
+	User_comprehension [label=comprehension fillcolor=crimson fontcolor=white shape=ellipse style=filled]
+	User_comprehension -> User
+	User_mastery [label=mastery fillcolor=crimson fontcolor=white shape=ellipse style=filled]
+	User_mastery -> User
+	User_speed [label=speed fillcolor=crimson fontcolor=white shape=ellipse style=filled]
+	User_speed -> User
+	Note_title [label=title fillcolor=crimson fontcolor=white shape=ellipse style=filled]
+	Note_title -> Note
+	Note_content [label=content fillcolor=crimson fontcolor=white shape=ellipse style=filled]
+	Note_content -> Note
+	Session_accuracy [label=accuracy fillcolor=crimson fontcolor=white shape=ellipse style=filled]
+	Session_accuracy -> Session
+	Session_mastery_level [label=mastery_level fillcolor=crimson fontcolor=white shape=ellipse style=filled]
+	Session_mastery_level -> Session
+	Session_session_score [label=session_score fillcolor=crimson fontcolor=white shape=ellipse style=filled]
+	Session_session_score -> Session
+	SessionTrial_accuracy_score [label=accuracy_score fillcolor=crimson fontcolor=white shape=ellipse style=filled]
+	SessionTrial_accuracy_score -> SessionTrial
+	SessionTrial_word_count_recalled [label=word_count_recalled fillcolor=crimson fontcolor=white shape=ellipse style=filled]
+	SessionTrial_word_count_recalled -> SessionTrial
+	Streak_date [label=date fillcolor=crimson fontcolor=white shape=ellipse style=filled]
+	Streak_date -> Streak
+	Streak_highest_score_of_day [label=highest_score_of_day fillcolor=crimson fontcolor=white shape=ellipse style=filled]
+	Streak_highest_score_of_day -> Streak
+	PerformanceHistory_accuracy_over_time [label=accuracy_over_time fillcolor=crimson fontcolor=white shape=ellipse style=filled]
+	PerformanceHistory_accuracy_over_time -> PerformanceHistory
+}
