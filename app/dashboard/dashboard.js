@@ -113,10 +113,17 @@ export default function Dashboard() {
 
     try {
       const res = await fetch(`/api/sessions?userId=${userId}&noteId=${selectedNoteId}`);
+
+      if (!res.ok) {
+        console.error("❌ Backend error:", res.status);
+        return;
+      }
+
       const json = await res.json();
       console.log('[DEBUG] /api/sessions response:', json);
 
-      const sessions = Array.isArray(json.sessions) ? json.sessions : [];
+      
+      const sessions = json?.sessions ?? [];
 
       const attempts = sessions.length;
       const lastStars = sessions[0]?.stars || 0;
@@ -146,7 +153,7 @@ export default function Dashboard() {
         sessions,
       });
     } catch (err) {
-      console.error('Failed to fetch session stats:', err);
+      console.error('❌ Failed to fetch session stats:', err);
       setSessionStats({
         attempts: 0,
         avgStars: 0,
@@ -158,6 +165,7 @@ export default function Dashboard() {
       });
     }
   }
+
 
 
 
@@ -174,7 +182,7 @@ export default function Dashboard() {
   // ✅ Create and immediately select + highlight new note
   const handleCreateNote = async () => {
     try {
-      const res = await fetch('/api/notes?userId=${user.id}', {
+      const res = await fetch(`/api/notes?userId=${user.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -241,6 +249,45 @@ export default function Dashboard() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedNoteId, localTitle, localContent]);
 
+    /* ────────────────────────────────────────────────
+    upload notes
+  ──────────────────────────────────────────────── */
+
+  const handleUploadNote = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (localContent.trim().length > 0) {
+      alert("Please clear the note content before uploading a file.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch("http://127.0.0.1:5000/upload-file", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error("Upload failed");
+
+      const data = await res.json();
+
+      if (data?.text) {
+        setLocalContent(data.text);
+        console.log("✅ Uploaded file converted to text:", data.text);
+      } else {
+        alert(data?.error || "Upload failed.");
+      }
+    } catch (error) {
+      console.error("❌ File upload error:", error);
+      alert("Upload failed. Make sure the backend server is running.");
+    }
+  };
+
+
 /* ────────────────────────────────────────────────
 👁️ 11. View Mode (list/card toggle)
 ──────────────────────────────────────────────── */
@@ -293,9 +340,20 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (user?.id && selectedNoteId) {
-      fetchSessionStats();
+      fetchSessionStats(user.id, selectedNoteId);
+
     }
   }, [user?.id, selectedNoteId, refresh]);
+
+
+    function triggerUploadDisabledMessage() {
+      setShowUploadDisabledMsg(true);
+      setTimeout(() => setShowUploadDisabledMsg(false), 5000);
+    }
+
+
+  const [showUploadDisabledMsg, setShowUploadDisabledMsg] = useState(false);
+
 
 
 
@@ -491,7 +549,12 @@ export default function Dashboard() {
                       content: selectedNote.content,
                     }));
                     console.log("[📤 Routing to session with note]", selectedNote);
-                    router.push(`/session?note=${encodedNote}&timeLimit=${timeLimit}`);
+                    router.push(
+                      `/session?noteId=${selectedNote.id}` +
+                      `&timeLimit=${toggles.timeLimit ? timeLimit : ''}` +
+                      `&allowHints=${toggles.hints ? 1 : 0}`
+                    );
+
 
 
 
@@ -514,40 +577,37 @@ export default function Dashboard() {
       )}
 
       {/* LEFT SIDEBAR */}
-      <aside className="w-[280px] border-r border-[#D9D9D9] flex flex-col px-4 pt-4 overflow-hidden z-10">
-       
-          <button
-            onClick={handleCreateNote}
-            className="w-full bg-white text-[#A229FF] border border-[#E0E0E0] rounded-full py-1 text-lg mb-4 hover:bg-[#A229FF] hover:text-white active:scale-95 transition"
-          >
-            +
-          </button>
+      {/* LEFT SIDEBAR */}
+      <aside className="w-[320px] border-r border-[#D9D9D9] flex flex-col px-4 pt-4 overflow-hidden z-10">
 
-
+        <button
+          onClick={handleCreateNote}
+          className="w-full bg-white text-[#A229FF] border border-[#E0E0E0] rounded-full py-1 text-lg mb-4 hover:bg-[#A229FF] hover:outline hover:outline-2 hover:outline-green-300 hover:text-white hover:border-green-300 active:scale-95 transition"
+        >
+          +
+        </button>
 
         {/* Toggles */}
         <div className="flex justify-start gap-2 mb-2 text-[#6B6767] text-xl">
-          <button 
-            onClick={() => setViewMode('list')} 
+          <button
+            onClick={() => setViewMode('list')}
             className={`rounded p-1 hover:bg-[#E5E7EB] ${viewMode === 'list' ? 'bg-[#F1E5FC]' : ''}`}
           >
             ☰
           </button>
-          <button 
-            onClick={() => setViewMode('card')} 
+          <button
+            onClick={() => setViewMode('card')}
             className={`rounded p-1 hover:bg-[#E5E7EB] ${viewMode === 'card' ? 'bg-[#F1E5FC]' : ''}`}
           >
             ⧉
           </button>
         </div>
 
-
-        {/* Scrollable Notes */}
         {/* Scrollable Notes */}
         <div className="flex-1 min-h-0 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-[#D8D8D8] scrollbar-track-transparent">
           {Array.isArray(notes) && (notes || []).length > 0 ? (
             [...notes]
-              .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) // ✅ newest to oldest
+              .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
               .map((note, index) => {
                 const isSelected = note.id === selectedNoteId;
                 const isHighlighted = note.id === highlightedNoteId;
@@ -561,110 +621,166 @@ export default function Dashboard() {
                       isHighlighted ? 'bg-[#F5E8FF] animate-pulse' : ''
                     } ${
                       viewMode === 'card'
-                        ? `rounded-xl px-3 py-2 mb-3 text-sm shadow-sm hover:bg-[#E5E7EB] ${
+                        ? `relative flex flex-col justify-between h-[110px] rounded-xl px-4 py-3 mb-3 text-sm shadow-sm hover:bg-[#E5E7EB] hover:border-[#A229FF] ${
                             isSelected
                               ? 'border border-[#A229FF] bg-[#F5E8FF]'
-                              : 'border border-[#C170FF] bg-white'
+                              : 'border border-[#E0E0E0] bg-white'
                           }`
                         : `flex justify-between items-center border-b border-gray-300 px-2 py-2 hover:bg-[#E5E7EB] ${
                             isSelected ? 'bg-[#F5E8FF]' : ''
                           }`
                     }`}
                   >
-                    <div>
+                    {/* Card Content */}
+                    <div className="flex-1 pr-6">
                       <h2 className="font-semibold text-black truncate max-w-[180px]">
                         {note.title || 'Untitled'}
                       </h2>
+
                       {viewMode === 'card' && (
-                        <p className="text-xs text-[#979797] mt-1">
-                          {note.content?.slice(0, 40) || 'No content'}...
-                        </p>
+                        <div className="relative text-xs text-[#979797] mt-1 max-h-[3.8rem] overflow-hidden">
+                          <p className="line-clamp-3 whitespace-pre-wrap">
+                            {note.content || 'No content'}
+                          </p>
+                        </div>
                       )}
                     </div>
 
+                    {/* LIST MODE: Date + Trash */}
                     {viewMode === 'list' && (
-                      <p className="text-xs text-[#979797]">
-                        {new Date(note.created_at).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                        })}
-                      </p>
+                      <div className="flex items-center gap-2 text-xs text-[#979797]">
+                        <span>
+                          {new Date(note.created_at).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                          })}
+                        </span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteNote(note.id);
+                          }}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity bg-red-100 hover:bg-red-200 text-red-600 hover:text-red-900 w-6 h-6 rounded-full flex items-center justify-center"
+                        >
+                          🗑️
+                        </button>
+                      </div>
                     )}
 
-                    {/* 🗑️ Hover Delete Button */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteNote(note.id);
-                      }}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 hidden group-hover:inline text-xs text-red-500 hover:text-red-700"
-                    >
-                      🗑️
-                    </button>
+                    {/* CARD MODE: Trash top-right, date bottom-right */}
+                    {viewMode === 'card' && (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteNote(note.id);
+                          }}
+                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-red-100 hover:bg-red-200 text-red-600 hover:text-red-900 w-6 h-6 rounded-full flex items-center justify-center"
+                        >
+                          🗑️
+                        </button>
+                        <p className="absolute bottom-2 right-3 text-xs text-[#979797]">
+                          {new Date(note.created_at).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                          })}
+                        </p>
+                      </>
+                    )}
                   </div>
                 );
+
               })
           ) : (
-            <p className="text-gray-400 text-sm mt-2">No notes found.</p>
+            <p className="text-gray-400 text-sm mt-2">No notes available Click (+) to create a new note.</p>
           )}
-
-        
         </div>
-
-
-
-
-
       </aside>
 
+
         {/* CENTER NOTE BLOCK */}
-      <main className="relative flex-1 flex justify-center items-start px-4 py-10 ">
+      <main className="relative flex-1 flex justify-center items-start px-4 py-10 overflow-hidden ">
         {/* PLAY BUTTON */}
         <div
-          onClick={() => setShowModal(true)}
-          className="absolute top-[0px] left-[230px] z-20 w-[76px] h-[76px] rounded-full bg-[#E9E9E9] border-[4px] border-[#A229FF] shadow-[0_4px_10px_rgba(0,0,0,0.25)] flex items-center justify-center cursor-pointer hover:scale-105 transition"
+          onClick={() => {
+            if (!selectedNoteId) return;
+            setShowModal(true);
+          }}
+          className={`absolute top-[0px] left-[230px] z-20 w-[76px] h-[76px] rounded-full border-[4px] flex items-center justify-center transition shadow-[0_4px_10px_rgba(0,0,0,0.25)]
+            ${selectedNoteId
+              ? 'bg-[#E9E9E9] border-[#A229FF] cursor-pointer hover:scale-105 '
+              : 'bg-gray-200 border-gray-400 cursor-not-allowed opacity-50'}
+          `}
         >
-          <div className="w-0 h-0 border-t-[16px] border-b-[16px] border-l-[28px] border-t-transparent border-b-transparent border-l-[#A229FF] ml-1" />
+          <div
+            className={`w-0 h-0 border-t-[16px] border-b-[16px] ml-1
+              ${selectedNoteId
+                ? 'border-l-[28px] border-l-[#A229FF] border-t-transparent border-b-transparent'
+                : 'border-l-[28px] border-l-gray-500 border-t-transparent border-b-transparent'}
+            `}
+          />
         </div>
 
+
         {/* White Center Card */}
-        <div className="w-[763px] h-[780px] rounded-2xl shadow-md bg-white  pt-[32px] pb-[32px] px-[46px] scrollbar-thin scrollbar-thumb-[#D8D8D8]">
+        {/* White Center Card */}
+        <div className="w-[763px] h-[780px] rounded-2xl shadow-md bg-white pt-[32px] pb-[32px] px-[46px] flex flex-col">
           {selectedNote ? (
             <>
-              <input
-                type="text"
-                value={localTitle}
-                onChange={(e) => setLocalTitle(e.target.value)}
-                className="text-2xl font-bold mb-4 w-full outline-none"
-                placeholder="Note Title"
-              />
+              {/* TOP: scrollable content except Save row */}
+              <div className="flex-1 overflow-y-auto mb-4">
+                <input
+                  type="text"
+                  value={localTitle}
+                  onChange={(e) => setLocalTitle(e.target.value)}
+                  className="text-2xl font-bold mb-4 w-full outline-none"
+                  placeholder="Note Title"
+                />
 
-              <textarea
-                value={localContent}
-                onChange={(e) => setLocalContent(e.target.value)}
-                placeholder="Start typing here..."
-                className="w-full h-[600px] resize-none outline-none text-base leading-relaxed bg-transparent"
-              />
-
-              {/* ✅ Save Status + Manual Save Button */}
-              <div className="flex justify-between items-center mt-3">
-                {saveStatus && (
-                  <p className="text-green-500 text-sm">{saveStatus}</p>
+                {localContent.trim().length === 0 ? (
+                  <input
+                    type="file"
+                    accept=".pdf,.docx,.txt"
+                    onChange={handleUploadNote}
+                    className="mb-4 block text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 
+                      file:rounded-full file:border-0 
+                      file:text-sm file:font-semibold 
+                      file:bg-[#C170FF] file:text-white 
+                      hover:file:bg-[#A229FF] cursor-pointer"
+                  />
+                ) : (
+                  showUploadDisabledMsg && (
+                    <p className="mb-4 text-sm text-gray-400">
+                      ✨ File upload disabled while typing. Delete all text to re-enable.
+                    </p>
+                  )
                 )}
+
+                <textarea
+                  value={localContent}
+                  onChange={(e) => {
+                    setLocalContent(e.target.value);
+                    if (e.target.value.trim().length > 0) {
+                      triggerUploadDisabledMessage();
+                    }
+                  }}
+                  placeholder="Start typing here..."
+                  className="w-full min-h-[600px] resize-none outline-none text-base leading-relaxed bg-transparent"
+                />
+              </div>
+
+              {/* Save Row: Fixed below text area */}
+              <div className="flex justify-between items-center mt-4 h-7">
                 <button
                   onClick={handleSave}
                   className="text-xs px-3 py-1 rounded-full bg-[#C170FF] text-white shadow hover:brightness-110"
                 >
                   Save
                 </button>
+                {saveStatus && (
+                  <p className="text-green-500 text-sm">{saveStatus}</p>
+                )}
               </div>
-
-              <p className="text-sm mt-4 text-[#979797]">
-                Verbatim Text:{' '}
-                <span className="text-[#A229FF] font-medium">
-                  {selectedNote.verbatim}
-                </span>
-              </p>
             </>
           ) : (
             <div className="text-gray-400 text-center text-xl py-20">
@@ -672,6 +788,8 @@ export default function Dashboard() {
             </div>
           )}
         </div>
+
+
       </main>
 
 

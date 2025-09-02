@@ -20,7 +20,7 @@ export default function ProfilePage() {
   const [selectedRow, setSelectedRow] = useState(null);
   const [selectedRowIndex, setSelectedRowIndex] = useState(null);
 
-const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(null);
 
 
   const [groupedData, setGroupedData] = useState({
@@ -60,6 +60,9 @@ const [selectedDate, setSelectedDate] = useState(null);
     }
     fetchSessions();
   }, [user]);
+
+  const streakStats = computeDailyStreaks(sessionData);
+
 
   // Find current sessions
   const selectedNoteId = selectedRow?.note_id;
@@ -126,33 +129,42 @@ const [selectedDate, setSelectedDate] = useState(null);
 
   // helper functions for streak and mastered notes:
 
-    function computeDailyStreak(sessions = []) {
-    if (!sessions.length) return 0;
+  function computeDailyStreaks(sessions = []) {
+    const validSessions = sessions.filter(s => s.stars > 0);
 
-    // Map sessions to unique days
+    if (validSessions.length === 0) return { current: 0, highest: 0 };
+
+    // Map to unique session dates
     const days = new Set(
-      sessions.map(s => new Date(s.created_at).toISOString().substring(0, 10))
+      validSessions.map(s => new Date(s.created_at).toISOString().substring(0, 10))
     );
 
-    // Convert to array of timestamps (in days)
-    const timestamps = [...days].map(d =>
+    const dayTimestamps = [...days].map(d =>
       Math.floor(new Date(d).getTime() / (1000 * 60 * 60 * 24))
     ).sort((a, b) => a - b);
 
-    let streak = 1;
+    let currentStreak = 1;
     let maxStreak = 1;
 
-    for (let i = 1; i < timestamps.length; i++) {
-      if (timestamps[i] === timestamps[i - 1] + 1) {
-        streak++;
-        maxStreak = Math.max(maxStreak, streak);
-      } else {
-        streak = 1;
+    for (let i = 1; i < dayTimestamps.length; i++) {
+      if (dayTimestamps[i] === dayTimestamps[i - 1] + 1) {
+        currentStreak++;
+        maxStreak = Math.max(maxStreak, currentStreak);
+      } else if (dayTimestamps[i] > dayTimestamps[i - 1] + 1) {
+        currentStreak = 1;
       }
     }
 
-    return maxStreak;
+    // Check if there's a session today
+    const todayStr = new Date().toISOString().substring(0, 10);
+    const hasSessionToday = days.has(todayStr);
+
+    // If no session today, streak is broken
+    if (!hasSessionToday) currentStreak = 0;
+
+    return { current: currentStreak, highest: maxStreak };
   }
+
 
   function computeNotesMastered(sessions = []) {
     if (!sessions.length) return 0;
@@ -250,15 +262,13 @@ const [selectedDate, setSelectedDate] = useState(null);
 
                 <div>
                   <p className="text-gray-500 relative group">
-                    Daily Streak
+                    Current Daily Streak
                     <span className="absolute left-0 top-full mt-1 hidden group-hover:block w-max bg-gray-800 text-white text-xs rounded px-2 py-1 shadow z-10">
                       Number of consecutive days with at least one session achieving a star.<br/>
-                      <span className="opacity-50">(Consecutive calendar days with stars)</span>
+                      <span className="opacity-50">(Resets if no session today)</span>
                     </span>
                   </p>
-                  <p className="text-xl font-semibold">
-                    {computeDailyStreak(sessionData)}
-                  </p>
+                  <p className="text-xl font-semibold">{streakStats.current}</p>
                 </div>
 
                 <div>
@@ -273,6 +283,47 @@ const [selectedDate, setSelectedDate] = useState(null);
                     {computeNotesMastered(sessionData)}
                   </p>
                 </div>
+
+                <div>
+                  <p className="text-gray-500 relative group">
+                    Highest Daily Streak
+                    <span className="absolute left-0 top-full mt-1 hidden group-hover:block w-max bg-gray-800 text-white text-xs rounded px-2 py-1 shadow z-10">
+                      Longest daily streak you've ever achieved.<br/>
+                      <span className="opacity-50">(All-time highest streak)</span>
+                    </span>
+                  </p>
+                  <p className="text-xl font-semibold">{streakStats.highest}</p>
+                </div>
+
+                <div>
+                  <p className="text-gray-500 relative group">
+                    Last Active{" "}
+                    <span className="text-gray-400 text-xs">
+                      {user?.last_active ? (() => {
+                        const last = new Date(user.last_active);
+                        const now = new Date();
+                        const diffTime = now - last;
+                        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                        return `(${diffDays === 0 ? 'today' : `${diffDays} day${diffDays > 1 ? 's' : ''} ago`})`;
+                      })() : ""}
+                    </span>
+                    <span className="absolute left-0 top-full mt-1 hidden group-hover:block w-max bg-gray-800 text-white text-xs rounded px-2 py-1 shadow z-10">
+                      The most recent calendar date when you performed a session.<br/>
+                      <span className="opacity-50">(Auto-updates when new session is saved)</span>
+                    </span>
+                  </p>
+                  <p className="text-xl font-semibold">
+                    {user?.last_active
+                      ? new Date(user.last_active).toLocaleDateString('en-US', {
+                          month: 'long',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })
+                      : "--"}
+                  </p>
+                </div>
+
+
 
               </div>
             </div>

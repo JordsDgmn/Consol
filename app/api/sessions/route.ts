@@ -1,8 +1,7 @@
-
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { pool } from '@/lib/db';
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get('userId');
@@ -33,7 +32,7 @@ export async function GET(req: Request) {
       );
     }
 
-    return NextResponse.json({ sessions: result.rows });
+    return NextResponse.json({ sessions: result.rows || [] }); // ✅ Always return array
   } catch (error) {
     console.error('GET /sessions error:', error);
     return NextResponse.json({ error: 'Failed to fetch sessions' }, { status: 500 });
@@ -42,9 +41,7 @@ export async function GET(req: Request) {
 
 
 
-
-
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const { user_id, note_id, similarity, stars, word_count, duration_secs, wpm } = await req.json();
 
@@ -58,10 +55,9 @@ export async function POST(req: Request) {
     return NextResponse.json(result.rows[0], { status: 201 });
   } catch (error) {
     console.error('POST /sessions error:', error);
-    return NextResponse.json({ error: 'Failed to create session' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to save session' }, { status: 500 });
   }
 }
-
 
 
 // export async function GET(req: Request) {

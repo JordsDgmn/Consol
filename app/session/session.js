@@ -4,16 +4,32 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { defaultSessionSettings, formatTime, saveSessionMetadata } from './sessionLogic';
 import { useUser } from '@/lib/UserContext';
 import { getTimeLimit } from './sessionLogic';
+import dynamic from 'next/dynamic';
+import { groupSessionsByNoteAndTime } from '@/utils/sessionUtils';
+
+
+
+const FinishModal = dynamic(() => import('./FinishModal'), { ssr: false });
+
 
 export default function SessionPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const encodedNote = searchParams.get('note');
+  const noteId = searchParams.get('noteId');
   const { user } = useUser();
+  const [viewMode, setViewMode] = useState('sessionOnly');
+  const noteTitle = searchParams.get('noteTitle');
+  const userId = searchParams.get('userId');
+  const [sessionOnlyGroup, setSessionOnlyGroup] = useState([]);
+  const [allSessionGroup, setAllSessionGroup] = useState([]);
+
+
 
   const [elapsed, setElapsed] = useState(0);
   const [text, setText] = useState('');
+  const [startTime, setStartTime] = useState(null);
   const [initialNote, setInitialNote] = useState(null);
+  
   const [score, setScore] = useState(null);
   const [stars, setStars] = useState('✩');
   const [hintCount, setHintCount] = useState(0);
@@ -23,8 +39,18 @@ export default function SessionPage() {
   const [showFinishModal, setShowFinishModal] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
 
+  const [sessions, setSessions] = useState([]);
+
   const intervalRef = useRef(null);
   const startTimeRef = useRef(Date.now());
+
+
+
+  const [chartData, setChartData] = useState([]);
+  const [highlightId, setHighlightId] = useState(null);
+
+
+
 
   const rawTimeLimit = Number(searchParams.get('timeLimit'));
   const [settings] = useState({
@@ -33,18 +59,45 @@ export default function SessionPage() {
   });
   const timeLimit = isNaN(rawTimeLimit) ? defaultSessionSettings.timeLimit : rawTimeLimit;
 
+  const textRef = useRef();
+
   // Load note from query param
+  // using noteId
   useEffect(() => {
-    if (!initialNote && encodedNote) {
-      try {
-        const parsed = JSON.parse(decodeURIComponent(encodedNote));
-        console.log('[🟢 Parsed note]', parsed);
-        setInitialNote(parsed);
-      } catch (err) {
-        console.error('❌ Failed to parse note:', err);
-      }
+    if (!noteId) {
+      console.error("🚫 noteId missing in URL");
+      alert("Note ID missing in URL. Cannot load session.");
+      return;
     }
-  }, [encodedNote, initialNote]);
+
+    if (!user?.id) {
+      console.warn("🕒 Waiting for user context...");
+      return;
+    }
+
+    const fetchNote = async () => {
+      try {
+        console.log("[🔍] Fetching note:", noteId, "for user:", user.id);
+        const res = await fetch(`/api/notes/${noteId}?userId=${user.id}`);
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData?.error || 'Unknown error');
+        }
+        const data = await res.json();
+        if (!data?.id) {
+          throw new Error("Note not found or empty result.");
+        }
+        console.log("[🟢 Loaded note]", data);
+        setInitialNote(data);
+      } catch (err) {
+        console.error('❌ Failed to fetch note:', err);
+        alert(`Failed to load note for session: ${err.message}`);
+      }
+    };
+
+    fetchNote();
+  }, [noteId, user?.id]);
+
 
   // Start interval timer
   useEffect(() => {
@@ -62,16 +115,32 @@ export default function SessionPage() {
 
   // Auto-finish when time limit reached
   useEffect(() => {
-    if (settings.timeLimit && elapsed >= settings.timeLimit) {
+    if (settings.timeLimit !== null && elapsed >= settings.timeLimit) {
       handleFinish();
     }
+  }, [elapsed, settings.timeLimit, isFinished]);
 
-  }, [elapsed, timeLimit, isFinished]);
+  useEffect(() => {
+    const activeGroup = viewMode === 'sessionOnly' ? sessionOnlyGroup : allSessionGroup;
+    if (!Array.isArray(activeGroup)) return; // safety guard
+    const flatGroup = Array.isArray(activeGroup[0]) ? activeGroup.flat() : activeGroup;
+
+
+    const chart = flatGroup.map((s, i) => ({
+      id: s.id,
+      similarity: Number(s.similarity),
+      trial: i + 1,
+    }));
+
+    console.log('[📈 Chart data]', chart);
+    setChartData(chart);
+  }, [viewMode, sessionOnlyGroup, allSessionGroup]);
+
+
 
   const handleFinish = async () => {
     if (isFinished) return;
     setIsFinished(true);
-
     clearInterval(intervalRef.current);
 
     if (!initialNote) {
@@ -92,11 +161,9 @@ export default function SessionPage() {
       const result = await res.json();
       console.log('[✅ Score received]', result);
 
-      // ALLOW ZERO score if empty
       if (typeof result.similarity !== 'number') {
-        if (text.trim() === '') {
-          result.similarity = 0.0;
-        } else {
+        if (text.trim() === '') result.similarity = 0.0;
+        else {
           alert('Invalid score from backend.');
           return;
         }
@@ -115,7 +182,7 @@ export default function SessionPage() {
       const word_count = text.trim().split(/\s+/).filter(Boolean).length;
       const wpm = duration_secs > 0 ? word_count / (duration_secs / 60) : 0;
 
-      await saveSessionMetadata({
+      const saved = await saveSessionMetadata({
         user_id: user?.id,
         note_id: initialNote?.id,
         similarity: result.similarity,
@@ -125,12 +192,45 @@ export default function SessionPage() {
         wpm,
       });
 
-      setShowFinishModal(true);
+      console.log('💾 Saved session:', saved);
+      setHighlightId(saved?.id || null);
+
+      const response = await fetch(`/api/sessions?userId=${user.id}&noteId=${initialNote.id}`);
+      const sessionData = await response.json();
+
+      const allSessions = Array.isArray(sessionData.sessions) ? sessionData.sessions : [];
+      setSessions(allSessions);
+      console.log('[📊 All sessions]', allSessions);
+
+      const { groupSessionsByNoteAndTime } = await import('@/utils/sessionUtils');
+      const { sessionOnly, allSessions: allGrouped } = groupSessionsByNoteAndTime(allSessions);
+
+      const sessionOnlyGroups = sessionOnly[initialNote.id] || [];
+      const allSessionGroup = allGrouped[initialNote.id] || [];
+
+      let retryGroup = sessionOnlyGroups.find(g => g.some(s => s.id === saved?.id));
+
+      if (!retryGroup) {
+        console.warn('[⚠️ retryGroup IS EMPTY] Could not match saved session ID in sessionOnly groups');
+        retryGroup = saved ? [saved] : [];
+      }
+
+      setSessionOnlyGroup(retryGroup);
+
+      setAllSessionGroup(allSessionGroup);
+
+      setTimeout(() => {
+        setShowFinishModal(true);
+      }, 100);
     } catch (err) {
       console.error('❌ Scoring failed:', err);
       alert('Failed to get score from backend.');
     }
   };
+
+
+
+
 
   const handleRestart = () => {
     clearInterval(intervalRef.current);
@@ -147,6 +247,9 @@ export default function SessionPage() {
     clearInterval(intervalRef.current);
     router.push('/dashboard?refresh=1');
   };
+
+  const allSessions = sessions; // 🆕 define from state for use in FinishModal
+
 
   return (
     <section className="min-h-screen w-full bg-[#2C282C] flex items-start justify-center p-10 gap-12 text-black font-sans">
@@ -237,54 +340,26 @@ export default function SessionPage() {
 
       {/* MODAL */}
       {showFinishModal && (
-        <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center">
-          <div className="relative w-[900px] bg-[#F1E5FC] rounded-2xl p-10 shadow-xl text-center text-black">
-            <h2 className="text-lg font-semibold mb-4">Similarity Score</h2>
-            {typeof score === 'number' ? (
-              <>
-                <p className="text-xl font-bold text-[#A229FF] mb-2">
-                  Score: {score.toFixed(4)}
-                </p>
-                <p className="text-3xl mb-6">{stars}</p>
-              </>
-            ) : (
-              <p className="text-sm text-[#696969]">Score unavailable.</p>
-            )}
+        <FinishModal
+          score={score}
+          stars={stars}
+          sessionData={{
+            allSessions, // ⬅️ all fetched sessions
+            sessionOnly: sessionOnlyGroup || [],
 
-            <div className="w-full h-48 bg-white rounded-lg border border-[#D9D9D9] flex items-center justify-center text-[#979797] mb-6">
-              Accuracy Chart (Placeholder)
-            </div>
+          }}
+          lineChartData={chartData} 
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+          handleRestart={handleRestart}
+          handleExit={handleExit}
+          highlightId={highlightId}
+        />
 
-            <div className="flex justify-center gap-4 mb-6">
-              <button className="bg-[#C170FF] text-white text-xs px-3 py-1 rounded-full">
-                all stats : on
-              </button>
-              <button className="bg-[#E0E0E0] text-[#696969] text-xs px-3 py-1 rounded-full">
-                session only
-              </button>
-              <button className="bg-[#E0E0E0] text-[#696969] text-xs px-3 py-1 rounded-full">
-                all sessions
-              </button>
-            </div>
 
-            <div className="flex justify-center gap-12">
-              <button
-                onClick={handleRestart}
-                className="flex items-center gap-2 px-6 py-3 bg-white border border-[#A229FF] rounded-full text-[#A229FF] shadow-md hover:brightness-110"
-              >
-                <div className="w-0 h-0 border-t-[8px] border-b-[8px] border-l-[14px] border-t-transparent border-b-transparent border-l-[#A229FF] ml-1" />
-                Try Again
-              </button>
-              <button
-                onClick={handleExit}
-                className="px-6 py-3 bg-white border border-[#D9D9D9] rounded-full text-[#696969] shadow-md hover:bg-[#F3F3F3]"
-              >
-                Exit Session
-              </button>
-            </div>
-          </div>
-        </div>
       )}
+
+
     </section>
   );
 }

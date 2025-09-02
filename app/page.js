@@ -1,8 +1,16 @@
-
 'use client';
 import Link from 'next/link';
+import { useEffect } from 'react';
+import { useUser } from '@/lib/UserContext';
 
 export default function LandingPage() {
+  const { setUser } = useUser();
+
+  useEffect(() => {
+    // ✅ Clear user context when landing page is mounted
+    setUser(null);
+  }, [setUser]);
+
   return (
     <main className="min-h-screen flex flex-col items-center justify-center bg-white text-black font-sans">
       <h1 className="text-4xl font-bold mb-6">Welcome to Consol</h1>
