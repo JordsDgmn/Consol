@@ -23,7 +23,7 @@ Chart.register(
   Legend
 );
 
-export default function RadarChart({ dataValues = [0, 0, 0], compareValues = null }) {
+export default function RadarChart({ dataValues = [0, 0, 0], compareValues = null, comparisonDate = null }) {
   const canvasRef = useRef(null);
   const [chartInstance, setChartInstance] = useState(null);
 
@@ -73,29 +73,27 @@ export default function RadarChart({ dataValues = [0, 0, 0], compareValues = nul
             suggestedMax: 100,
             ticks: { stepSize: 25 },
             grid: { color: '#e5e7eb' },
-            pointLabels: { font: { size: 8 } },
+            pointLabels: { 
+              font: { size: 14 },
+              color: '#374151',
+              padding: 8
+            },
           },
         },
         plugins: {
           legend: { display: false },
           tooltip: {
+            position: 'nearest',
+            xAlign: 'center',
+            yAlign: 'bottom',
+            caretPadding: 10,
+            displayColors: true, // Show color legend indicators
             callbacks: {
+              title: () => '', // Remove title to reduce clutter
               label: (ctx) => {
-                const i = ctx.dataIndex;
-                const metric = ctx.chart.data.labels[i];
+                const metric = ctx.chart.data.labels[ctx.dataIndex];
                 const value = ctx.formattedValue;
-
-                // Descriptions for each stat
-                const definitions = {
-                  Comprehension:
-                    "Average similarity between your recollection and the original note.\nFormula: avg(similarity) × 100",
-                  Speed:
-                    "Typing speed adjusted for completeness of recall.\nFormula: WPM × completeness ÷ 3",
-                  Mastery:
-                    "Consistency in earning 3 stars on a note.\nFormula: (3-star sessions ÷ all sessions) × 100",
-                };
-
-                return `${metric}: ${value}\n${definitions[metric] || ""}`;
+                return `${metric}: ${value}`;
               },
             },
           },
@@ -114,13 +112,17 @@ export default function RadarChart({ dataValues = [0, 0, 0], compareValues = nul
 
       {/* Floating comparison table */}
       {compareValues && (
-        <div className="absolute top-4 right-[-200px] w-[220px] bg-white border border-purple-200 shadow-lg rounded-lg p-3 text-xs transition-opacity duration-300 opacity-100">
-          <h3 className="text-center font-semibold text-purple-600 mb-2">Comparison</h3>
+        <div className="absolute top-4 right-[-220px] w-[240px] bg-white border border-purple-200 shadow-lg rounded-lg p-4 text-xs transition-opacity duration-300 opacity-100">
+          <h3 className="text-center font-semibold text-purple-600 mb-4 text-sm">Comparison</h3>
           <table className="w-full text-center">
             <thead>
               <tr>
-                <th className="text-gray-500 text-xs">Metric </th>
-                <th className="text-purple-700 text-xs">Now ← Then</th>
+                <th className="text-black text-xs font-medium border-b border-gray-300 pb-1 mb-2">
+                  <span>Metric</span>
+                </th>
+                <th className="text-black text-xs font-medium border-b border-gray-300 pb-1 mb-2">
+                  <span>Then → Now</span>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -154,23 +156,38 @@ export default function RadarChart({ dataValues = [0, 0, 0], compareValues = nul
 
                 return (
                   <tr key={metric}>
-                    <td className="py-1">
-                      <span className="relative group cursor-help text-purple-700">
+                    <td className="py-2 text-left">
+                      <span className="relative group cursor-help text-purple-700 hover:text-purple-800 transition-colors underline decoration-dotted">
                         {metric}
                         <span className="absolute left-full ml-2 hidden group-hover:block w-max max-w-xs bg-gray-800 text-white text-xs rounded px-2 py-1 shadow z-10">
                           {definitions[metric]}
                         </span>
                       </span>
                     </td>
-                    <td className="py-1">
-                      {dataValues[i]} ← {compareValues[i]}
+                    <td className="py-2 text-center">
+                      <span className="font-bold text-gray-500">{compareValues[i]}</span>
+                      <span className="mx-1 text-gray-400">→</span>
+                      <span className="font-bold text-purple-700">{dataValues[i]}</span>
                     </td>
                   </tr>
                 );
               })}
             </tbody>
-
           </table>
+          
+          {/* Date divider and comparison date */}
+          {comparisonDate && (
+            <>
+              <div className="border-b border-gray-300 my-3"></div>
+              <p className="text-center text-gray-400 text-xs">
+                Comparing with stats from {new Date(comparisonDate).toLocaleDateString('en-US', {
+                  month: 'long',
+                  day: 'numeric',
+                  year: 'numeric'
+                })}
+              </p>
+            </>
+          )}
         </div>
       )}
 

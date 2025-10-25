@@ -90,13 +90,20 @@ export default function ProfilePage() {
 
 
 
-  // Comparison calculation
-  const comparisonValues = selectedRow && viewMode === 'sessionOnly'
+  // Temporal comparison calculation (current stats vs. stats at selected date)
+  const comparisonValues = selectedRow
     ? (() => {
-        const groups = groupedData?.sessionOnly?.[selectedRow.note_id] || [];
-        const group = groups.find(g => g.some(s => s.id === selectedRow.id));
-        if (group) {
-          return computeRadarStats(group, originalWordCount);
+        const selectedDate = new Date(selectedRow.created_at).toISOString().substring(0, 10);
+        
+        // Get all sessions up to and including the selected date
+        const sessionsUpToSelectedDate = sessionData.filter(session => {
+          const sessionDate = new Date(session.created_at).toISOString().substring(0, 10);
+          return sessionDate <= selectedDate;
+        });
+
+        if (sessionsUpToSelectedDate.length > 0) {
+          // Calculate stats as they were on the selected date
+          return computeRadarStats(sessionsUpToSelectedDate, originalWordCount);
         }
         return null;
       })()
@@ -347,7 +354,9 @@ export default function ProfilePage() {
                 setSelectedRow(row);
                 const idx = sortedSessions.findIndex((s) => s.id === row.id);
                 setSelectedRowIndex(idx);
-                setSelectedDate(row.created_at?.slice(0,10) || null);
+                // Use consistent date formatting
+                const dateStr = new Date(row.created_at).toISOString().substring(0, 10);
+                setSelectedDate(dateStr);
               }}
             />
 
@@ -426,6 +435,7 @@ export default function ProfilePage() {
           <RadarChart 
             dataValues={overallRadarStats} 
             compareValues={comparisonValues}
+            comparisonDate={selectedRow?.created_at}
           />
 
         </div>
@@ -437,7 +447,9 @@ export default function ProfilePage() {
             selectedDate={selectedDate}
             onSelectDate={(session) => {
               setSelectedRow(session);
-              setSelectedDate(session.created_at?.slice(0,10) || null);
+              // Use consistent date formatting
+              const dateStr = new Date(session.created_at).toISOString().substring(0, 10);
+              setSelectedDate(dateStr);
               const idx = sortedSessions.findIndex((s) => s.id === session.id);
               setSelectedRowIndex(idx);
             }}

@@ -60,9 +60,11 @@ export default function HistoryTable({
       selectedIndex !== null &&
       rowRefs.current[selectedIndex]
     ) {
+      // Use 'center' for better visibility when scrolling to distant items
       rowRefs.current[selectedIndex].scrollIntoView({
         behavior: 'smooth',
-        block: 'nearest',
+        block: 'center',
+        inline: 'nearest'
       });
     }
   }, [selectedIndex]);
@@ -99,7 +101,9 @@ export default function HistoryTable({
             onClick={() => {
               onRowSelect(s);
               if (setSelectedDate) {
-                setSelectedDate(s.created_at?.slice(0, 10) || null);
+                // Use consistent date formatting
+                const dateStr = new Date(s.created_at).toISOString().substring(0, 10);
+                setSelectedDate(dateStr);
               }
             }}
             className={`transition-colors cursor-pointer ${
