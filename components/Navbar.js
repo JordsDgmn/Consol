@@ -3,11 +3,14 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useUser } from '@/lib/UserContext';
+import { useState } from 'react';
+import HelpModal from './HelpModal';
 
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, setUser } = useUser(); // ✅ Access and modify user
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
 
   const handleExit = () => {
     setUser(null);               // Clear user context
@@ -48,6 +51,14 @@ export default function Navbar() {
             </button>
           </Link>
 
+          {/* Help Button */}
+          <button
+            onClick={() => setIsHelpOpen(true)}
+            className="px-4 py-1 border rounded transition border-white text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+          >
+            Help
+          </button>
+
           {/* Exit Button */}
           <button
             onClick={handleExit}
@@ -58,6 +69,12 @@ export default function Navbar() {
         </div>
 
       )}
+
+      {/* Help Modal */}
+      <HelpModal 
+        isOpen={isHelpOpen} 
+        onClose={() => setIsHelpOpen(false)} 
+      />
     </header>
   );
 }
