@@ -14,6 +14,7 @@ import { defaultSessionSettings, formatTime, saveTimeLimit, getTimeLimit, getDif
 
 
 const LineChart = dynamic(() => import('@/components/LineChart'), { ssr: false });
+const StarSlot = dynamic(() => import('@/components/StarSlot'), { ssr: false });
 
 
 
@@ -477,19 +478,27 @@ export default function Dashboard() {
               {/* Last Score (Stars) */}
               <div>
                 <p className="text-sm text-[#979797]">Last Score</p>
-                <p className="text-2xl font-semibold">
-                  {sessionStats?.lastStars && sessionStats.lastStars > 0
-                    ? '⭐'.repeat(sessionStats.lastStars)
-                    : '✩'}
-                </p>
+                <div className="text-2xl font-semibold flex items-center gap-1">
+                  {sessionStats?.lastStars && sessionStats.lastStars > 0 ? (
+                    <>
+                      {[1, 2, 3].map(starNum => (
+                        <StarSlot 
+                          key={starNum}
+                          filled={starNum <= sessionStats.lastStars} 
+                          size="1.5rem"
+                        />
+                      ))}
+                    </>
+                  ) : (
+                    <StarSlot filled={false} size="1.5rem" />
+                  )}
+                </div>
                 <p className="text-xs text-[#C170FF]">
                   {sessionStats.lastScore !== null
                     ? `${(sessionStats.lastScore * 100).toFixed(1)}%`
                     : '—'}{" "}
                   (based on SimCSE)
                 </p>
-
-
               </div>
 
               {/* WPM */}
@@ -799,51 +808,84 @@ export default function Dashboard() {
       {/* RIGHT PANEL */}
       <aside className="w-[360px] bg-[#F8F8F8] p-4 flex flex-col text-center text-sm text-black overflow-hidden">
         <div className="bg-[#F8F8F8] rounded-xl p-4 mb-4">
-          <div className="grid grid-cols-3 gap-4 text-xs mb-2">
+          <div className="grid grid-cols-2 gap-6 text-xs">
             {/* Word Count */}
-            <div>
-              <p className="text-sm text-[#979797]">Note Word Count</p>
+            <div className="text-center">
+              <p className="text-sm text-[#979797] mb-2">Note Word Count</p>
               <p className="text-2xl font-semibold">
                 {Number.isFinite(wordCount) && wordCount > 0 ? wordCount : '❓'}
               </p>
-
-
             </div>
 
             {/* Attempts Made */}
-            <div>
-              <p className="text-[#979797]">Attempts Made:</p>
-              <p className="text-xl font-semibold">
+            <div className="text-center">
+              <p className="text-sm text-[#979797] mb-2">Attempts Made</p>
+              <p className="text-2xl font-semibold">
                 {sessionStats?.attempts ?? '__'}
               </p>
             </div>
 
-            {/* Average Score */}
-            <div>
-              <p className="text-[#979797]">Average Score:</p>
-              <p className="text-xl font-semibold">
-                {sessionStats.avgStars === 0
-                  ? '—'
-                  : '★'.repeat(sessionStats.avgStars).padEnd(3, '☆')}
+            {/* Last Session */}
+            <div className="text-center">
+              <p className="text-sm text-[#979797] mb-2">Last Session</p>
+              <div className="text-lg font-semibold">
+                {sessionStats?.sessions?.[0]?.created_at ? (
+                  <>
+                    <div className="text-base">
+                      {new Date(sessionStats.sessions[0].created_at).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric'
+                      })}
+                    </div>
+                    <div className="text-xs text-[#979797] mt-1">
+                      {new Date(sessionStats.sessions[0].created_at).toLocaleTimeString('en-US', {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                      })}
+                    </div>
+                  </>
+                ) : (
+                  <span className="text-base">—</span>
+                )}
+              </div>
+            </div>
+
+            {/* Last Speed (WPM) */}
+            <div className="text-center">
+              <p className="text-sm text-[#979797] mb-2">Last Speed (WPM)</p>
+              <p className="text-2xl font-semibold">
+                {Number.isFinite(sessionStats?.sessions?.[0]?.wpm)
+                  ? sessionStats.sessions[0].wpm.toFixed(1)
+                  : '⏱️'}
               </p>
-              <p className="text-xs text-[#979797] mt-[-4px]">
+            </div>
+          </div>
+
+          {/* Average Score - Bottom Section */}
+          <div className="mt-6 pt-4 border-t border-[#E0E0E0]">
+            <div className="text-center">
+              <p className="text-sm text-[#979797] mb-2">Average Score</p>
+              <div className="flex items-center justify-center gap-1 mb-1">
+                {sessionStats.avgStars === 0 ? (
+                  <span className="text-xl font-semibold">—</span>
+                ) : (
+                  <>
+                    {[1, 2, 3].map(starNum => (
+                      <StarSlot 
+                        key={starNum}
+                        filled={starNum <= sessionStats.avgStars} 
+                        size="1.5rem"
+                      />
+                    ))}
+                  </>
+                )}
+              </div>
+              <p className="text-xs text-[#979797]">
                 {sessionStats.avgScore !== null
                   ? `${(sessionStats.avgScore * 100).toFixed(1)}%`
                   : ''}
-              </p>
-            </div>
-
-            {/* Verbatim-Tagged Words (Placeholder) */}
-            <div>
-              <p className="text-[#979797]">Verbatim-Tagged Words:</p>
-              <p className="text-xl font-semibold">4</p>
-            </div>
-
-            {/* Total Attempts Again (Placeholder) */}
-            <div>
-              <p className="text-[#979797]">Attempts Made:</p>
-              <p className="text-xl font-semibold">
-                {sessionStats?.attempts ?? '__'}
               </p>
             </div>
           </div>
@@ -864,6 +906,7 @@ export default function Dashboard() {
                   id: s.id,
                   similarity: s.similarity,
                   trial: i + 1,
+                  created_at: s.created_at,
                 }))}
                 highlightId={sessionStats.sessions?.[0]?.id || null}
               />

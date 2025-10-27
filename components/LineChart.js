@@ -92,6 +92,30 @@ export default function LineChart({ data = [], highlightId = null }) {
           tooltip: {
             callbacks: {
               label: (ctx) => `Similarity: ${ctx.parsed.y.toFixed(3)}`,
+              afterLabel: (ctx) => {
+                const session = data[ctx.dataIndex];
+                console.log('Tooltip session data:', session); // Debug log
+                if (session?.created_at) {
+                  try {
+                    const date = new Date(session.created_at);
+                    const dateStr = date.toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric'
+                    });
+                    const timeStr = date.toLocaleTimeString('en-US', {
+                      hour: 'numeric',
+                      minute: '2-digit',
+                      hour12: true
+                    });
+                    return `${dateStr} at ${timeStr}`;
+                  } catch (error) {
+                    console.error('Date parsing error:', error);
+                    return '';
+                  }
+                }
+                return '';
+              },
             },
           },
         },
