@@ -470,7 +470,7 @@ export default function Dashboard() {
               <div>
                 <p className="text-sm text-[#979797]">Note Word Count</p>
                 <p className="text-2xl font-semibold">
-                  {Number.isFinite(wordCount) && wordCount > 0 ? wordCount : '❓'}
+                  {Number.isFinite(wordCount) && wordCount > 0 ? wordCount : '—'}
                 </p>
 
               </div>
@@ -507,7 +507,7 @@ export default function Dashboard() {
                 <p className="text-xl font-semibold">
                   {Number.isFinite(sessionStats?.sessions?.[0]?.wpm)
                     ? sessionStats.sessions[0].wpm.toFixed(1)
-                    : '⏱️'}
+                    : '—'}
                 </p>
                 <p className="text-xs text-[#979797]">
                   {Number.isFinite(sessionStats?.sessions?.[0]?.duration_secs)
@@ -813,7 +813,7 @@ export default function Dashboard() {
             <div className="text-center">
               <p className="text-sm text-[#979797] mb-2">Note Word Count</p>
               <p className="text-2xl font-semibold">
-                {Number.isFinite(wordCount) && wordCount > 0 ? wordCount : '❓'}
+                {Number.isFinite(wordCount) && wordCount > 0 ? wordCount : '—'}
               </p>
             </div>
 
@@ -821,7 +821,7 @@ export default function Dashboard() {
             <div className="text-center">
               <p className="text-sm text-[#979797] mb-2">Attempts Made</p>
               <p className="text-2xl font-semibold">
-                {sessionStats?.attempts ?? '__'}
+                {sessionStats?.attempts ?? 0}
               </p>
             </div>
 
@@ -858,7 +858,7 @@ export default function Dashboard() {
               <p className="text-2xl font-semibold">
                 {Number.isFinite(sessionStats?.sessions?.[0]?.wpm)
                   ? sessionStats.sessions[0].wpm.toFixed(1)
-                  : '⏱️'}
+                  : '—'}
               </p>
             </div>
           </div>
@@ -909,6 +909,7 @@ export default function Dashboard() {
                   created_at: s.created_at,
                 }))}
                 highlightId={sessionStats.sessions?.[0]?.id || null}
+                pointSize={1.5}
               />
             ) : (
               <span className="text-gray-400 text-xs">No sessions available for this note.</span>

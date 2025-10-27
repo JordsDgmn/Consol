@@ -120,6 +120,7 @@ export default function ProfilePage() {
           id: s.id,
           similarity: s.similarity,
           trial: i + 1,
+          created_at: s.created_at,
         }));
     } else {
       const group = (groupedData.sessionOnly[selectedNoteId] || []).find(g =>
@@ -130,6 +131,7 @@ export default function ProfilePage() {
           id: s.id,
           similarity: s.similarity,
           trial: i + 1,
+          created_at: s.created_at,
         }));
     }
   }
@@ -419,6 +421,7 @@ export default function ProfilePage() {
                   <LineChart
                     data={lineChartData}
                     highlightId={selectedRow.id}
+                    tooltipMode={viewMode === 'sessionOnly' ? 'timeOnly' : 'full'}
                   />
                 </div>
               </>

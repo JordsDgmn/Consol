@@ -14,7 +14,7 @@ import { initTWE } from 'tw-elements';
 
 Chart.register(LineController, LineElement, PointElement, LinearScale, Title, CategoryScale, Tooltip);
 
-export default function LineChart({ data = [], highlightId = null }) {
+export default function LineChart({ data = [], highlightId = null, pointSize = 3, tooltipMode = 'full' }) {
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -42,8 +42,8 @@ export default function LineChart({ data = [], highlightId = null }) {
             borderColor: 'rgba(168, 85, 247, 1)', // purple line
             backgroundColor: 'rgba(168, 85, 247, 0.1)', // light fill
             tension: 0.3,
-            pointRadius: 5,
-            pointHoverRadius: 6,
+            pointRadius: pointSize,
+            pointHoverRadius: pointSize + 1,
               pointBackgroundColor: (ctx) => {
                 const i = ctx.dataIndex;
                 const session = data[i];
@@ -98,17 +98,30 @@ export default function LineChart({ data = [], highlightId = null }) {
                 if (session?.created_at) {
                   try {
                     const date = new Date(session.created_at);
-                    const dateStr = date.toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric'
-                    });
-                    const timeStr = date.toLocaleTimeString('en-US', {
-                      hour: 'numeric',
-                      minute: '2-digit',
-                      hour12: true
-                    });
-                    return `${dateStr} at ${timeStr}`;
+                    
+                    // Different tooltip modes
+                    if (tooltipMode === 'timeOnly') {
+                      // Show only time for "session only" mode
+                      const timeStr = date.toLocaleTimeString('en-US', {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                      });
+                      return timeStr;
+                    } else {
+                      // Show full date and time for "all sessions" mode and dashboard
+                      const dateStr = date.toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric'
+                      });
+                      const timeStr = date.toLocaleTimeString('en-US', {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                      });
+                      return `${dateStr} at ${timeStr}`;
+                    }
                   } catch (error) {
                     console.error('Date parsing error:', error);
                     return '';
