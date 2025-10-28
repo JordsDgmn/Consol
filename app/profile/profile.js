@@ -13,6 +13,8 @@ const LineChart = dynamic(() => import('@/components/LineChart'), { ssr: false }
 export default function ProfilePage() {
   const { user } = useUser();
   const [notes, setNotes] = useState([]);
+  const [profilePictureFile, setProfilePictureFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
   const [overallRadarStats, setOverallRadarStats] = useState([0, 0, 0]);
 
@@ -32,6 +34,42 @@ export default function ProfilePage() {
   const sortedSessions = [...sessionData].sort(
     (a, b) => new Date(b.created_at) - new Date(a.created_at)
   );
+
+  const handleProfilePictureUpload = async (file) => {
+    if (!file || !user?.id) return;
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('profilePicture', file);
+      formData.append('userId', user.id.toString());
+
+      const res = await fetch('/api/users/upload-profile', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      
+      if (res.ok) {
+        // Update the user context with new profile picture
+        const updatedUser = { ...user, profile_picture_url: data.imageUrl };
+        
+        // Update localStorage and context
+        localStorage.setItem('consol_user', JSON.stringify(updatedUser));
+        
+        // Force a page refresh to ensure the new image loads
+        window.location.reload();
+      } else {
+        alert('Failed to upload profile picture: ' + (data.error || 'Unknown error'));
+      }
+    } catch (err) {
+      console.error('[❌ UPLOAD ERROR]', err);
+      alert('Failed to upload profile picture: ' + err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   useEffect(() => {
     async function fetchNotes() {
@@ -208,11 +246,48 @@ export default function ProfilePage() {
         {/* Top Left Profile Main*/}
         <div className="flex items-center justify-center px-8">
           <div className="flex items-center gap-8">
-            <div className="w-48 h-48 rounded-full border border-gray-300 flex items-center justify-center text-sm text-gray-500">
-              [ Profile Picture ]
+            <div className="relative w-48 h-48 rounded-full border border-gray-300 overflow-hidden group cursor-pointer">
+              {user?.profile_picture_url ? (
+                <img 
+                  src={user.profile_picture_url} 
+                  alt={`${user.username}'s profile`}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-sm text-gray-500 bg-gray-50">
+                  [ Profile Picture ]
+                </div>
+              )}
+              
+              {/* Hover overlay */}
+              <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <div className="text-white text-center">
+                  <svg className="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <p className="text-xs font-medium">
+                    {uploading ? 'Uploading...' : 'Change Profile Picture'}
+                  </p>
+                </div>
+              </div>
+              
+              {/* Hidden file input */}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file) {
+                    handleProfilePictureUpload(file);
+                  }
+                }}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                disabled={uploading}
+              />
             </div>
             <div className="flex flex-col gap-4">
-              <h2 className="text-4xl font-semibold">User Name</h2>
+              <h2 className="text-4xl font-semibold">{user?.username || 'User Name'}</h2>
               <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
 
                 <div>

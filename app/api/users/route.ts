@@ -8,6 +8,7 @@ export async function GET() {
       SELECT 
         u.id,
         u.username,
+        u.profile_picture_url,
         u.created_at,
         COUNT(DISTINCT n.id) AS notes,
         ROUND(AVG(s.wpm)::numeric, 1) AS speed,
