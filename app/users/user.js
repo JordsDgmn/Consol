@@ -9,6 +9,8 @@ export default function UsersPage() {
   const [editingUser, setEditingUser] = useState(null);
   const [profilePictureFile, setProfilePictureFile] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [deletingUser, setDeletingUser] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const { setUser } = useUser();
   const router = useRouter();
 
@@ -57,22 +59,27 @@ export default function UsersPage() {
   };
 
   const handleProfilePictureUpload = async () => {
-    if (!profilePictureFile || !editingUser) {
-      alert('Please select a file first');
-      return;
-    }
-
-    console.log('🚀 Starting upload...', {
-      file: profilePictureFile.name,
-      userId: editingUser.id,
-      fileSize: profilePictureFile.size
-    });
-
-    setUploading(true);
     try {
+      // Capture the current user data to avoid state timing issues
+      const currentEditingUser = editingUser;
+      const currentUserId = currentEditingUser?.id;
+      
+      if (!profilePictureFile || !currentEditingUser || !currentUserId) {
+        alert('Please select a file and ensure user is properly selected');
+        return;
+      }
+
+      console.log('🚀 Starting upload...', {
+        file: profilePictureFile.name,
+        userId: currentUserId,
+        fileSize: profilePictureFile.size
+      });
+
+      setUploading(true);
+      
       const formData = new FormData();
       formData.append('profilePicture', profilePictureFile);
-      formData.append('userId', editingUser.id.toString());
+      formData.append('userId', currentUserId.toString());
 
       console.log('📤 Sending request to /api/users/upload-profile');
 
@@ -86,28 +93,34 @@ export default function UsersPage() {
       const data = await res.json();
       console.log('📥 Response data:', data);
       
-      if (res.ok) {
+      if (res.ok && data?.imageUrl) {
         // Update the users list with the new profile picture
         setUsers(prev => prev.map(u => 
-          u.id === editingUser.id 
+          u.id === currentUserId 
             ? { ...u, profile_picture_url: data.imageUrl }
             : u
         ));
         
         // If this is the current user, update the context too
-        const currentUser = JSON.parse(localStorage.getItem('consol_user') || '{}');
-        if (currentUser.id === editingUser.id) {
-          const updatedUser = { ...currentUser, profile_picture_url: data.imageUrl };
-          localStorage.setItem('consol_user', JSON.stringify(updatedUser));
+        try {
+          const currentUser = JSON.parse(localStorage.getItem('consol_user') || '{}');
+          if (currentUser?.id === currentUserId) {
+            const updatedUser = { ...currentUser, profile_picture_url: data.imageUrl };
+            localStorage.setItem('consol_user', JSON.stringify(updatedUser));
+          }
+        } catch (localStorageError) {
+          console.warn('Failed to update localStorage:', localStorageError);
         }
         
-        setEditingUser(null);
+        // Clear the file first, then the user to avoid timing issues
         setProfilePictureFile(null);
-        console.log('[✅ PROFILE PICTURE UPLOADED]', data);
+        console.log('[✅ PROFILE PICTURE UPLOADED]', { imageUrl: data.imageUrl, success: true });
         alert('Profile picture uploaded successfully!');
+        // Clear editing user at the very end
+        setEditingUser(null);
       } else {
         console.error('[❌ UPLOAD FAILED]', data);
-        alert('Failed to upload profile picture: ' + (data.error || 'Unknown error'));
+        alert('Failed to upload profile picture: ' + (data?.error || 'Unknown error'));
       }
     } catch (err) {
       console.error('[❌ UPLOAD ERROR]', err);
@@ -115,6 +128,76 @@ export default function UsersPage() {
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleDeleteClick = (e, user) => {
+    e.stopPropagation(); // Prevent user selection when clicking delete
+    setDeletingUser(user);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    // Capture the current user data to avoid state timing issues
+    const currentDeletingUser = deletingUser;
+    
+    if (!currentDeletingUser || !currentDeletingUser.id) {
+      alert('Invalid user selected for deletion');
+      return;
+    }
+
+    try {
+      console.log('🗑️ Deleting user:', {
+        id: currentDeletingUser.id,
+        username: currentDeletingUser.username,
+        type: typeof currentDeletingUser.id
+      });
+      
+      const res = await fetch(`/api/users/${currentDeletingUser.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      console.log('📥 Delete response status:', res.status);
+
+      if (res.ok) {
+        const responseData = await res.json();
+        console.log('✅ Delete response:', responseData);
+        
+        // Remove user from the list
+        setUsers(prev => prev.filter(u => u.id !== currentDeletingUser.id));
+        
+        // If this was the current user, clear the context
+        const currentUser = JSON.parse(localStorage.getItem('consol_user') || '{}');
+        if (currentUser.id === currentDeletingUser.id) {
+          localStorage.removeItem('consol_user');
+          // Optionally redirect to users page or show a message
+        }
+        
+        console.log('[✅ USER DELETED]', currentDeletingUser.username);
+        alert(`User "${currentDeletingUser.username}" has been deleted successfully.`);
+      } else {
+        const data = await res.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('[❌ DELETE FAILED]', {
+          status: res.status,
+          statusText: res.statusText,
+          data: data
+        });
+        alert('Failed to delete user: ' + (data.error || `HTTP ${res.status} ${res.statusText}`));
+      }
+    } catch (err) {
+      console.error('[❌ DELETE ERROR]', err);
+      alert('Failed to delete user: ' + err.message);
+    } finally {
+      setShowDeleteConfirm(false);
+      setDeletingUser(null);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteConfirm(false);
+    setDeletingUser(null);
   };
 
   return (
@@ -152,8 +235,19 @@ export default function UsersPage() {
             <div
               key={user.id}
               onClick={() => handleUserSelect(user)}
-              className="cursor-pointer w-full flex items-center justify-between bg-white hover:bg-purple-100 transition-all duration-500 ease-out border border-gray-300 rounded-xl shadow p-6"
+              className="cursor-pointer w-full flex items-center justify-between bg-white hover:bg-purple-100 transition-all duration-500 ease-out border border-gray-300 rounded-xl shadow p-6 relative"
             >
+              {/* Delete Button - Top Right Corner */}
+              <button
+                onClick={(e) => handleDeleteClick(e, user)}
+                className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all duration-200 opacity-60 hover:opacity-100"
+                title="Delete User"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+
               <div className="flex items-center gap-6">
                 <div className="w-24 h-24 rounded-full border border-gray-400 bg-gray-100 flex items-center justify-center text-xs text-gray-500 overflow-hidden">
                   {user.profile_picture_url ? (
@@ -224,10 +318,10 @@ export default function UsersPage() {
             {/* Current Profile Picture */}
             <div className="flex justify-center mb-4">
               <div className="w-32 h-32 rounded-full border border-gray-300 bg-gray-100 flex items-center justify-center overflow-hidden">
-                {editingUser.profile_picture_url ? (
+                {editingUser?.profile_picture_url ? (
                   <img 
-                    src={editingUser.profile_picture_url} 
-                    alt={`${editingUser.username}'s profile`}
+                    src={editingUser?.profile_picture_url} 
+                    alt={`${editingUser?.username || 'User'}'s profile`}
                     className="w-full h-full object-cover"
                   />
                 ) : (
@@ -242,7 +336,7 @@ export default function UsersPage() {
                 Username
               </label>
               <div className="px-3 py-2 border border-gray-300 rounded bg-gray-50 text-gray-700">
-                {editingUser.username}
+                {editingUser?.username || 'Unknown User'}
               </div>
             </div>
 
@@ -280,6 +374,64 @@ export default function UsersPage() {
                 }`}
               >
                 {uploading ? 'Uploading...' : 'Upload Picture'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && deletingUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-96 max-w-sm mx-4">
+            <h3 className="text-xl font-semibold mb-4 text-gray-900">Delete User</h3>
+            
+            {/* Warning Message */}
+            <div className="mb-6">
+              <p className="text-gray-700 mb-2">
+                Are you sure you want to delete <strong>"{deletingUser?.username || 'Unknown User'}"</strong>?
+              </p>
+              <p className="text-sm text-red-600 bg-red-50 p-3 rounded border-l-4 border-red-400">
+                ⚠️ This action cannot be undone. All notes and session data for this user will be permanently deleted.
+              </p>
+            </div>
+
+            {/* User Info Summary */}
+            <div className="mb-6 p-3 bg-gray-50 rounded">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full border border-gray-300 bg-gray-100 flex items-center justify-center overflow-hidden">
+                  {deletingUser?.profile_picture_url ? (
+                    <img 
+                      src={deletingUser.profile_picture_url} 
+                      alt={`${deletingUser.username}'s profile`}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-xs text-gray-500">No Image</span>
+                  )}
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900">{deletingUser?.username || 'Unknown User'}</p>
+                  <p className="text-sm text-gray-600">
+                    {deletingUser?.notes || 0} notes • {deletingUser?.speed || 0} avg WPM
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={handleDeleteCancel}
+                className="flex-1 px-4 py-2 text-gray-700 border border-gray-300 rounded hover:bg-gray-50 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition"
+              >
+                Delete User
               </button>
             </div>
           </div>

@@ -738,13 +738,27 @@ export default function Dashboard() {
             <>
               {/* TOP: scrollable content except Save row */}
               <div className="flex-1 overflow-y-auto mb-4">
-                <input
-                  type="text"
-                  value={localTitle}
-                  onChange={(e) => setLocalTitle(e.target.value)}
-                  className="text-2xl font-bold mb-4 w-full outline-none"
-                  placeholder="Note Title"
-                />
+                {/* Title row with Save button */}
+                <div className="flex justify-between items-center mb-4">
+                  <input
+                    type="text"
+                    value={localTitle}
+                    onChange={(e) => setLocalTitle(e.target.value)}
+                    className="text-2xl font-bold flex-1 outline-none mr-4"
+                    placeholder="Note Title"
+                  />
+                  <div className="flex items-center gap-3 shrink-0">
+                    {saveStatus && (
+                      <p className="text-green-500 text-sm">{saveStatus}</p>
+                    )}
+                    <button
+                      onClick={handleSave}
+                      className="text-xs px-3 py-1 rounded-full bg-[#C170FF] text-white shadow hover:brightness-110"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
 
                 {localContent.trim().length === 0 ? (
                   <input
@@ -776,19 +790,6 @@ export default function Dashboard() {
                   placeholder="Start typing here..."
                   className="w-full min-h-[600px] resize-none outline-none text-base leading-relaxed bg-transparent"
                 />
-              </div>
-
-              {/* Save Row: Fixed below text area */}
-              <div className="flex justify-between items-center mt-4 h-7">
-                <button
-                  onClick={handleSave}
-                  className="text-xs px-3 py-1 rounded-full bg-[#C170FF] text-white shadow hover:brightness-110"
-                >
-                  Save
-                </button>
-                {saveStatus && (
-                  <p className="text-green-500 text-sm">{saveStatus}</p>
-                )}
               </div>
             </>
           ) : (
