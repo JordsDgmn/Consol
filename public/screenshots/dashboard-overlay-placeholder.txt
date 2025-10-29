@@ -1,0 +1,8 @@
+This is a placeholder file.
+
+Please replace this with your dashboard overlay screenshot.
+The screenshot should show the dashboard page with annotations/overlays explaining the different UI elements.
+
+Expected filename: dashboard-overlay.png
+Recommended size: 1200x800px or similar aspect ratio
+Format: PNG with transparency support for overlays

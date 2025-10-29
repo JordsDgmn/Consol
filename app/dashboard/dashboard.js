@@ -635,14 +635,16 @@ export default function Dashboard() {
                               ? 'border border-[#A229FF] bg-[#F5E8FF]'
                               : 'border border-[#E0E0E0] bg-white'
                           }`
-                        : `flex justify-between items-center border-b border-gray-300 px-2 py-2 hover:bg-[#E5E7EB] ${
+                        : `flex justify-between items-center border-b border-gray-300 px-2 py-3 text-base hover:bg-[#E5E7EB] ${
                             isSelected ? 'bg-[#F5E8FF]' : ''
                           }`
                     }`}
                   >
                     {/* Card Content */}
                     <div className="flex-1 pr-6">
-                      <h2 className="font-semibold text-black truncate max-w-[180px]">
+                      <h2 className={`font-semibold text-black truncate max-w-[180px] ${
+                        viewMode === 'list' ? 'text-lg' : ''
+                      }`}>
                         {note.title || 'Untitled'}
                       </h2>
 

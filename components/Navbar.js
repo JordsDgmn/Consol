@@ -12,6 +12,14 @@ export default function Navbar() {
   const { user, setUser } = useUser(); // ✅ Access and modify user
   const [isHelpOpen, setIsHelpOpen] = useState(false);
 
+  // Determine current page from pathname
+  const getCurrentPage = () => {
+    if (pathname.includes('/profile')) return 'profile';
+    if (pathname.includes('/dashboard')) return 'dashboard';
+    if (pathname.includes('/users')) return 'profile'; // Users page is profile-related
+    return 'dashboard'; // Default fallback
+  };
+
   const handleExit = () => {
     setUser(null);               // Clear user context
     router.push('/');            // Redirect to welcome screen
@@ -73,7 +81,8 @@ export default function Navbar() {
       {/* Help Modal */}
       <HelpModal 
         isOpen={isHelpOpen} 
-        onClose={() => setIsHelpOpen(false)} 
+        onClose={() => setIsHelpOpen(false)}
+        currentPage={getCurrentPage()}
       />
     </header>
   );
