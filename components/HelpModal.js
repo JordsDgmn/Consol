@@ -47,70 +47,72 @@ export default function HelpModal({ isOpen, onClose, currentPage = 'dashboard' }
     const otherPages = ['dashboard', 'profile'].filter(page => page !== currentPage);
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Current Page Overlay */}
-        <div className="bg-purple-50 rounded-xl p-6 border border-purple-200">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-semibold text-purple-700">
+        <div className="bg-purple-50 rounded-xl p-4 border border-purple-200">
+          <div className="flex items-center mb-3">
+            <h3 className="text-lg font-semibold text-purple-700">
               📍 Current Page: {currentOverlay.title}
             </h3>
-            <button
-              onClick={() => setFullscreenImage(currentOverlay.screenshot)}
-              className="text-sm px-3 py-1 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
-            >
-              🔍 Fullscreen
-            </button>
           </div>
-          <div className="bg-white rounded-lg p-4 mb-4">
-            <img 
-              src={currentOverlay.screenshot} 
-              alt={`${currentOverlay.title} overlay`}
-              className="w-full h-96 object-cover rounded-lg bg-gray-200 flex items-center justify-center cursor-pointer"
-              onClick={() => setFullscreenImage(currentOverlay.screenshot)}
-              onError={(e) => {
-                e.target.style.display = 'none';
-                e.target.nextSibling.style.display = 'flex';
-              }}
-            />
-            <div className="hidden w-full h-96 bg-gray-200 rounded-lg items-center justify-center text-gray-500">
-              Screenshot placeholder for {currentOverlay.title}
+          <div className="bg-white rounded-lg p-2 mb-3">
+            <div className="relative group">
+              <img 
+                src={currentOverlay.screenshot} 
+                alt={`${currentOverlay.title} overlay`}
+                className="w-full h-[500px] object-cover rounded-lg bg-gray-200 cursor-pointer transition-all duration-300 group-hover:blur-sm group-hover:brightness-50"
+                onClick={() => setFullscreenImage(currentOverlay.screenshot)}
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'flex';
+                }}
+              />
+              <div className="hidden w-full h-[500px] bg-gray-200 rounded-lg items-center justify-center text-gray-500 text-sm">
+                Screenshot placeholder for {currentOverlay.title}
+              </div>
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                <span className="bg-black bg-opacity-70 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                  Click to view in fullscreen
+                </span>
+              </div>
             </div>
           </div>
-          <p className="text-gray-700">{currentOverlay.description}</p>
+          <p className="text-gray-700 text-sm">{currentOverlay.description}</p>
         </div>
 
         {/* Other Page Overlays */}
-        <div className="space-y-4">
-          <h4 className="text-lg font-semibold text-gray-700">Other Page Guides</h4>
+        <div className="space-y-3">
+          <h4 className="text-md font-semibold text-gray-700">Other Page Guides</h4>
           {otherPages.map(page => {
             const overlay = getPageOverlay(page);
             return (
-              <div key={page} className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                <div className="flex items-center justify-between mb-2">
-                  <h5 className="text-md font-semibold text-gray-600">{overlay.title}</h5>
-                  <button
-                    onClick={() => setFullscreenImage(overlay.screenshot)}
-                    className="text-xs px-2 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition"
-                  >
-                    🔍
-                  </button>
+              <div key={page} className="bg-gray-50 rounded-xl p-3 border border-gray-200">
+                <div className="flex items-center mb-2">
+                  <h5 className="text-sm font-semibold text-gray-600">{overlay.title}</h5>
                 </div>
-                <div className="bg-white rounded-lg p-3 mb-2">
-                  <img 
-                    src={overlay.screenshot} 
-                    alt={`${overlay.title} overlay`}
-                    className="w-full h-48 object-cover rounded-lg bg-gray-200 flex items-center justify-center cursor-pointer"
-                    onClick={() => setFullscreenImage(overlay.screenshot)}
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.nextSibling.style.display = 'flex';
-                    }}
-                  />
-                  <div className="hidden w-full h-48 bg-gray-200 rounded-lg items-center justify-center text-gray-500 text-sm">
-                    Screenshot placeholder for {overlay.title}
+                <div className="bg-white rounded-lg p-2 mb-2">
+                  <div className="relative group">
+                    <img 
+                      src={overlay.screenshot} 
+                      alt={`${overlay.title} overlay`}
+                      className="w-full h-64 object-cover rounded-lg bg-gray-200 cursor-pointer transition-all duration-300 group-hover:blur-sm group-hover:brightness-50"
+                      onClick={() => setFullscreenImage(overlay.screenshot)}
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                    <div className="hidden w-full h-64 bg-gray-200 rounded-lg items-center justify-center text-gray-500 text-xs">
+                      Screenshot placeholder for {overlay.title}
+                    </div>
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                      <span className="bg-black bg-opacity-70 text-white px-3 py-1 rounded-lg text-xs font-medium">
+                        Click to view in fullscreen
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <p className="text-gray-600 text-sm">{overlay.description}</p>
+                <p className="text-gray-600 text-xs">{overlay.description}</p>
               </div>
             );
           })}
@@ -118,18 +120,18 @@ export default function HelpModal({ isOpen, onClose, currentPage = 'dashboard' }
 
         {/* Fullscreen Modal */}
         {fullscreenImage && (
-          <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
-            <div className="relative max-w-6xl max-h-full p-4">
+          <div className="fixed inset-0 bg-black bg-opacity-95 flex items-center justify-center z-50">
+            <div className="relative w-[95vw] h-[95vh] p-4">
               <button
                 onClick={() => setFullscreenImage(null)}
-                className="absolute top-2 right-2 text-white text-2xl font-bold bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-70 transition"
+                className="absolute top-4 right-4 text-white text-3xl font-bold bg-black bg-opacity-60 rounded-full w-12 h-12 flex items-center justify-center hover:bg-opacity-80 transition z-10"
               >
                 ×
               </button>
               <img
                 src={fullscreenImage}
                 alt="Fullscreen view"
-                className="max-w-full max-h-full object-contain"
+                className="w-full h-full object-contain rounded-lg"
               />
             </div>
           </div>
@@ -143,19 +145,19 @@ export default function HelpModal({ isOpen, onClose, currentPage = 'dashboard' }
       <div className={`${bgColor} rounded-xl border ${borderColor}`}>
         <button
           onClick={() => toggleDropdown(id)}
-          className={`w-full p-4 text-left flex items-center justify-between hover:opacity-80 transition-opacity`}
+          className={`w-full p-3 text-left flex items-center justify-between hover:opacity-80 transition-opacity`}
         >
-          <h3 className={`text-lg font-semibold ${textColor}`}>{title}</h3>
-          <span className={`text-lg ${textColor} transform transition-transform ${openDropdowns[id] ? 'rotate-180' : ''}`}>
+          <h3 className={`text-md font-semibold ${textColor}`}>{title}</h3>
+          <span className={`text-md ${textColor} transform transition-transform ${openDropdowns[id] ? 'rotate-180' : ''}`}>
             ▼
           </span>
         </button>
         {openDropdowns[id] && (
-          <div className="px-4 pb-4 space-y-3">
+          <div className="px-3 pb-3 space-y-2">
             {content.map((item, index) => (
-              <div key={index} className="bg-white rounded-lg p-3 shadow-sm">
-                <h4 className="font-medium text-gray-800 mb-2">{item.question}</h4>
-                <p className="text-gray-600 text-sm leading-relaxed">{item.answer}</p>
+              <div key={index} className="bg-white rounded-lg p-2 shadow-sm">
+                <h4 className="font-medium text-gray-800 mb-1 text-sm">{item.question}</h4>
+                <p className="text-gray-600 text-xs leading-relaxed">{item.answer}</p>
               </div>
             ))}
           </div>
@@ -286,55 +288,55 @@ export default function HelpModal({ isOpen, onClose, currentPage = 'dashboard' }
         </div>
 
         {/* Frequently Asked Questions */}
-        <div className="bg-gray-50 rounded-xl p-6 border border-gray-200 mt-8">
-          <h3 className="text-xl font-semibold text-gray-700 mb-4">❓ Frequently Asked Questions</h3>
-          <div className="space-y-4">
+        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 mt-6">
+          <h3 className="text-lg font-semibold text-gray-700 mb-3">❓ Frequently Asked Questions</h3>
+          <div className="space-y-3">
             <div>
-              <h4 className="font-semibold text-gray-700">How does the scoring system work?</h4>
-              <p className="text-gray-600 text-sm mt-1">The system uses semantic similarity to compare your recall with the original content. Scores are shown as percentages and converted to 0-3 stars based on performance thresholds.</p>
+              <h4 className="font-semibold text-gray-700 text-sm">How does the scoring system work?</h4>
+              <p className="text-gray-600 text-xs mt-1">The system uses semantic similarity to compare your recall with the original content. Scores are shown as percentages and converted to 0-3 stars based on performance thresholds.</p>
             </div>
             <div>
-              <h4 className="font-semibold text-gray-700">Can I upload different file types?</h4>
-              <p className="text-gray-600 text-sm mt-1">Yes, you can upload PDF, DOCX, and TXT files. The system will extract the text content for your study sessions.</p>
+              <h4 className="font-semibold text-gray-700 text-sm">Can I upload different file types?</h4>
+              <p className="text-gray-600 text-xs mt-1">Yes, you can upload PDF, DOCX, and TXT files. The system will extract the text content for your study sessions.</p>
             </div>
             <div>
-              <h4 className="font-semibold text-gray-700">What do the radar chart metrics mean?</h4>
-              <p className="text-gray-600 text-sm mt-1">The radar chart shows three metrics: Comprehension (average similarity), Speed (normalized WPM), and Mastery (consistency of 3-star sessions).</p>
+              <h4 className="font-semibold text-gray-700 text-sm">What do the radar chart metrics mean?</h4>
+              <p className="text-gray-600 text-xs mt-1">The radar chart shows three metrics: Comprehension (average similarity), Speed (normalized WPM), and Mastery (consistency of 3-star sessions).</p>
             </div>
             <div>
-              <h4 className="font-semibold text-gray-700">How can I improve my study scores?</h4>
-              <p className="text-gray-600 text-sm mt-1">Focus on understanding concepts rather than exact wording, practice active recall regularly, and aim for comprehensive coverage of the material.</p>
+              <h4 className="font-semibold text-gray-700 text-sm">How can I improve my study scores?</h4>
+              <p className="text-gray-600 text-xs mt-1">Focus on understanding concepts rather than exact wording, practice active recall regularly, and aim for comprehensive coverage of the material.</p>
             </div>
             <div>
-              <h4 className="font-semibold text-gray-700">Can I edit my notes after creating them?</h4>
-              <p className="text-gray-600 text-sm mt-1">Yes, you can edit note titles and content at any time. Use Ctrl+S to save changes or click the Save button in the upper right corner.</p>
+              <h4 className="font-semibold text-gray-700 text-sm">Can I edit my notes after creating them?</h4>
+              <p className="text-gray-600 text-xs mt-1">Yes, you can edit note titles and content at any time. Use Ctrl+S to save changes or click the Save button in the upper right corner.</p>
             </div>
             <div>
-              <h4 className="font-semibold text-gray-700">How do I delete notes I no longer need?</h4>
-              <p className="text-gray-600 text-sm mt-1">Hover over a note in the sidebar and click the trash icon (🗑️) that appears. Confirm the deletion when prompted.</p>
+              <h4 className="font-semibold text-gray-700 text-sm">How do I delete notes I no longer need?</h4>
+              <p className="text-gray-600 text-xs mt-1">Hover over a note in the sidebar and click the trash icon (🗑️) that appears. Confirm the deletion when prompted.</p>
             </div>
           </div>
         </div>
 
         {/* Additional FAQ Section */}
-        <div className="bg-gray-50 rounded-xl p-6 border border-gray-200 mt-8">
-          <h3 className="text-xl font-semibold text-gray-700 mb-4">💡 Quick Tips</h3>
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="bg-white rounded-lg p-3">
-              <h4 className="font-medium text-gray-800 mb-1">Keyboard Shortcuts</h4>
-              <p className="text-gray-600 text-sm">Press Ctrl+S to save notes quickly</p>
+        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 mt-6">
+          <h3 className="text-lg font-semibold text-gray-700 mb-3">💡 Quick Tips</h3>
+          <div className="grid md:grid-cols-2 gap-3">
+            <div className="bg-white rounded-lg p-2">
+              <h4 className="font-medium text-gray-800 mb-1 text-sm">Keyboard Shortcuts</h4>
+              <p className="text-gray-600 text-xs">Press Ctrl+S to save notes quickly</p>
             </div>
-            <div className="bg-white rounded-lg p-3">
-              <h4 className="font-medium text-gray-800 mb-1">Best Practice</h4>
-              <p className="text-gray-600 text-sm">Study in short, focused sessions for better retention</p>
+            <div className="bg-white rounded-lg p-2">
+              <h4 className="font-medium text-gray-800 mb-1 text-sm">Best Practice</h4>
+              <p className="text-gray-600 text-xs">Study in short, focused sessions for better retention</p>
             </div>
-            <div className="bg-white rounded-lg p-3">
-              <h4 className="font-medium text-gray-800 mb-1">File Types</h4>
-              <p className="text-gray-600 text-sm">Supports PDF, DOCX, and TXT uploads</p>
+            <div className="bg-white rounded-lg p-2">
+              <h4 className="font-medium text-gray-800 mb-1 text-sm">File Types</h4>
+              <p className="text-gray-600 text-xs">Supports PDF, DOCX, and TXT uploads</p>
             </div>
-            <div className="bg-white rounded-lg p-3">
-              <h4 className="font-medium text-gray-800 mb-1">Progress Tracking</h4>
-              <p className="text-gray-600 text-sm">Check the calendar for daily study streaks</p>
+            <div className="bg-white rounded-lg p-2">
+              <h4 className="font-medium text-gray-800 mb-1 text-sm">Progress Tracking</h4>
+              <p className="text-gray-600 text-xs">Check the calendar for daily study streaks</p>
             </div>
           </div>
         </div>
@@ -353,22 +355,22 @@ export default function HelpModal({ isOpen, onClose, currentPage = 'dashboard' }
       {/* Modal Content */}
       <div className="relative bg-white rounded-2xl shadow-2xl w-[85vw] h-[85vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h1 className="text-3xl font-bold text-gray-800">Help & Support</h1>
+        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+          <h1 className="text-2xl font-bold text-gray-800">Help & Support</h1>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-2xl font-bold px-3 py-1 rounded-full hover:bg-gray-100 transition"
+            className="text-gray-500 hover:text-gray-700 text-xl font-bold px-2 py-1 rounded-full hover:bg-gray-100 transition"
           >
             ×
           </button>
         </div>
 
         {/* Tab Toggle */}
-        <div className="flex justify-center p-4 border-b border-gray-200">
+        <div className="flex justify-center p-3 border-b border-gray-200">
           <div className="flex bg-gray-100 rounded-lg p-1">
             <button
               onClick={() => setActiveTab('user-guide')}
-              className={`px-6 py-2 rounded-md font-semibold transition-all ${
+              className={`px-4 py-2 rounded-md font-semibold transition-all text-sm ${
                 activeTab === 'user-guide'
                   ? 'bg-purple-600 text-white shadow-md'
                   : 'text-gray-600 hover:text-gray-800'
@@ -378,7 +380,7 @@ export default function HelpModal({ isOpen, onClose, currentPage = 'dashboard' }
             </button>
             <button
               onClick={() => setActiveTab('overview')}
-              className={`px-6 py-2 rounded-md font-semibold transition-all ${
+              className={`px-4 py-2 rounded-md font-semibold transition-all text-sm ${
                 activeTab === 'overview'
                   ? 'bg-purple-600 text-white shadow-md'
                   : 'text-gray-600 hover:text-gray-800'
@@ -390,19 +392,19 @@ export default function HelpModal({ isOpen, onClose, currentPage = 'dashboard' }
         </div>
 
         {/* Content */}
-        <div className="flex-1 p-6 overflow-y-auto">
+        <div className="flex-1 p-4 overflow-y-auto">
           {activeTab === 'user-guide' ? renderUserGuide() : renderOverview()}
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
+        <div className="px-4 py-3 bg-gray-50 border-t border-gray-200">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-500">
+            <p className="text-xs text-gray-500">
               Need more help? Contact support or check our documentation.
             </p>
             <button
               onClick={onClose}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
+              className="px-3 py-1 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm"
             >
               Close Help
             </button>
