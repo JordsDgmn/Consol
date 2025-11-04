@@ -21,7 +21,10 @@ export function groupSessionsByNoteAndTime(sessions) {
       const curr = new Date(sorted[i].created_at);
       const diff = (curr - prev) / 1000; // in seconds
 
-      if (diff <= 300) {
+      // Check if there was an intentional session end between these sessions
+      const wasSessionEndedBetween = checkForSessionEndBetween(prev, curr, noteId);
+
+      if (diff <= 300 && !wasSessionEndedBetween) {
         group.push(sorted[i]);
       } else {
         groups.push(group);
@@ -33,6 +36,24 @@ export function groupSessionsByNoteAndTime(sessions) {
   }
 
   return { allSessions, sessionOnly };
+}
+
+function checkForSessionEndBetween(prevTime, currTime, noteId) {
+  try {
+    const lastSessionEnd = localStorage.getItem('lastSessionEnd');
+    if (!lastSessionEnd) return false;
+
+    const sessionEndData = JSON.parse(lastSessionEnd);
+    if (sessionEndData.noteId !== noteId) return false;
+
+    const endTime = new Date(sessionEndData.endTime);
+    
+    // Check if the session end happened between these two sessions
+    return endTime > prevTime && endTime < currTime;
+  } catch (error) {
+    console.warn('Error checking session end:', error);
+    return false;
+  }
 }
 
 

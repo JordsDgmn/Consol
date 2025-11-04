@@ -174,7 +174,7 @@ export default function HelpModal({ isOpen, onClose, currentPage = 'dashboard' }
       },
       {
         question: "Understanding the scoring system",
-        answer: "The system uses semantic similarity to evaluate your recall against the original content. Scores are shown as similarity percentages and converted to stars: 0-29% (0 stars), 30-49% (1 star), 50-69% (2 stars), 70%+ (3 stars)."
+        answer: "The system uses semantic similarity to evaluate your recall against the original content. Scores are shown as similarity percentages and converted to stars: 0-29% (0 stars), 30-59% (1 star), 60-80% (2 stars), 81%+ (3 stars)."
       },
       {
         question: "Reading your performance metrics",
@@ -227,7 +227,7 @@ export default function HelpModal({ isOpen, onClose, currentPage = 'dashboard' }
       },
       {
         question: "Star rating explanations",
-        answer: "Stars are based on similarity percentages: 0 stars (0-29% similarity), 1 star (30-49%), 2 stars (50-69%), 3 stars (70%+). The system uses these thresholds to provide clear performance feedback."
+        answer: "Stars are based on similarity percentages: 0 stars (0-29% similarity), 1 star (30-59%), 2 stars (60-80%), 3 stars (81%+). The system uses these thresholds to provide clear performance feedback."
       },
       {
         question: "Improving your scores",

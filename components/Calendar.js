@@ -58,9 +58,9 @@ const Calendar = ({ sessions, onSelectDate, selectedDate }) => {
     
     // Map similarity to star slots (0-3 filled stars)
     let filledStars = 0;
-    if (avgSimilarity >= 0.7) filledStars = 3;      // 70%+ = 3 stars
-    else if (avgSimilarity >= 0.5) filledStars = 2; // 50-69% = 2 stars  
-    else if (avgSimilarity >= 0.3) filledStars = 1; // 30-49% = 1 star
+    if (avgSimilarity >= 0.81) filledStars = 3;     // 81%+ = 3 stars
+    else if (avgSimilarity >= 0.6) filledStars = 2; // 60-80% = 2 stars  
+    else if (avgSimilarity >= 0.3) filledStars = 1; // 30-59% = 1 star
     else filledStars = 0;                            // <30% = 0 stars
 
     // Always return 3 slots, fill based on performance

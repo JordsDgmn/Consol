@@ -107,6 +107,10 @@ export default function Dashboard() {
     avgStars: 0,
     lastStars: 0,
     avgScore: null,
+    lastScore: null,
+    lastSpeed: null,
+    masteryLevel: null,
+    sessions: [],
   });
 
   async function fetchSessionStats(userId, selectedNoteId) {
@@ -131,16 +135,24 @@ export default function Dashboard() {
       const lastScore = sessions[0]?.similarity ?? null;
       const lastSpeed = sessions[0]?.wpm ?? null;
 
-      const avgScore =
-        attempts > 0
-          ? sessions.reduce((sum, s) => sum + Number(s.similarity), 0) / attempts
-          : null;
+      // Filter sessions with valid similarity scores and calculate average
+      const sessionsWithScores = sessions.filter(s => s.similarity !== null && s.similarity !== undefined && !isNaN(Number(s.similarity)));
+      const avgScore = sessionsWithScores.length > 0
+        ? sessionsWithScores.reduce((sum, s) => sum + Number(s.similarity), 0) / sessionsWithScores.length
+        : null;
+
+      console.log('[DEBUG] Sessions with scores:', sessionsWithScores.length, 'out of', sessions.length);
+      console.log('[DEBUG] Average score calculated:', avgScore);
+
+      // Calculate mastery level (percentage of 3-star sessions)
+      const threeStarSessions = sessions.filter(s => s.stars === 3);
+      const masteryLevel = attempts > 0 ? (threeStarSessions.length / attempts) * 100 : null;
 
       let avgStars = 0;
       if (avgScore !== null) {
-        if (avgScore >= 0.9) avgStars = 3;
-        else if (avgScore >= 0.7) avgStars = 2;
-        else if (avgScore >= 0.45) avgStars = 1;
+        if (avgScore >= 0.81) avgStars = 3;       // 81% for 3 stars
+        else if (avgScore >= 0.6) avgStars = 2;   // 60% for 2 stars  
+        else if (avgScore >= 0.3) avgStars = 1;   // 30% for 1 star
         else avgStars = 0;
       }
 
@@ -151,6 +163,7 @@ export default function Dashboard() {
         avgScore,
         lastScore,
         lastSpeed,
+        masteryLevel,
         sessions,
       });
     } catch (err) {
@@ -162,6 +175,7 @@ export default function Dashboard() {
         avgScore: null,
         lastScore: null,
         lastSpeed: null,
+        masteryLevel: null,
         sessions: [],
       });
     }
@@ -375,13 +389,11 @@ export default function Dashboard() {
             {/* Toggles + Text */}
             <div className="flex justify-between items-start mb-10">
               <div className="space-y-6">
-                {['hints', 'timeLimit', 'verbatim'].map((key) => (
+                {['hints', 'timeLimit'].map((key) => (
                   <div key={key} className="flex items-center gap-5">
                     <span className="text-md font-medium capitalize">
                       {key === 'timeLimit'
                         ? 'Time Limit'
-                        : key === 'verbatim'
-                        ? 'Verbatim Tags'
                         : 'Allow Hints'}
                     </span>
                     <label className="relative inline-flex items-center cursor-pointer">
@@ -414,122 +426,124 @@ export default function Dashboard() {
 
 
             {/* Stats Row */}
-            <div className="flex justify-around text-center mb-8">
+            <div className="grid grid-cols-5 gap-8 text-center mb-8">
 
               {/* Recall Session Duration */}
               <div className="flex flex-col items-center">
-                <p className="text-sm text-[#979797]">Recall Session Duration</p>
-                {!toggles.timeLimit ? (
-                  <p className="text-2xl font-semibold mt-2">Unlimited</p>
-                ) : (
-                  <>
-                    <input
-                      type="text"
-                      value={durationInput}
-                      onChange={(e) => setDurationInput(e.target.value)}
-                      className="text-2xl font-semibold text-center w-32 border-b border-black outline-none"
-                    />
-                    <div className="flex gap-2 mt-1 text-xs">
-                      <button
-                        className="text-[#C170FF] underline hover:text-[#A229FF] hover:cursor-pointer hover:border-b hover:border-[#A229FF]"
-                        onClick={() => {
-                          const parts = durationInput.split(':').map(Number);
-                          const totalSecs = parts[0] * 3600 + parts[1] * 60 + parts[2];
-
-                          setTimeLimit(totalSecs);
-                          // Save it into localStorage immediately
-                          saveTimeLimit(totalSecs);
-                        }}
-
-                      >
-                        Apply
-                      </button>
-                      <button
-                        className="text-[#C170FF] underline hover:text-[#A229FF] hover:cursor-pointer hover:border-b hover:border-[#A229FF]"
-                        onClick={() => {
-                          const parts = durationInput.split(':').map(Number);
-                          const totalSecs =
-                            parts[0] * 3600 + parts[1] * 60 + parts[2];
-                          saveTimeLimit(totalSecs);
-                          setTimeLimit(totalSecs);
-                        }}
-                      >
-                        Set as Default
-                      </button>
+                <span className="text-sm text-[#979797] mb-2">Recall Session Duration</span>
+                <div className="flex flex-col items-center">
+                  {!toggles.timeLimit ? (
+                    <p className="text-xl font-semibold">Unlimited</p>
+                  ) : (
+                    <div className="flex flex-col items-center">
+                      <input
+                        type="text"
+                        value={durationInput}
+                        onChange={(e) => setDurationInput(e.target.value)}
+                        className="text-xl font-semibold text-center w-32 border-b border-black outline-none mb-1"
+                      />
+                      <div className="flex gap-2 text-xs">
+                        <button
+                          className="text-[#C170FF] underline hover:text-[#A229FF] hover:cursor-pointer hover:border-b hover:border-[#A229FF]"
+                          onClick={() => {
+                            const parts = durationInput.split(':').map(Number);
+                            const totalSecs = parts[0] * 3600 + parts[1] * 60 + parts[2];
+                            setTimeLimit(totalSecs);
+                            saveTimeLimit(totalSecs);
+                          }}
+                        >
+                          Apply
+                        </button>
+                        <button
+                          className="text-[#C170FF] underline hover:text-[#A229FF] hover:cursor-pointer hover:border-b hover:border-[#A229FF]"
+                          onClick={() => {
+                            const parts = durationInput.split(':').map(Number);
+                            const totalSecs = parts[0] * 3600 + parts[1] * 60 + parts[2];
+                            saveTimeLimit(totalSecs);
+                            setTimeLimit(totalSecs);
+                          }}
+                        >
+                          Set as Default
+                        </button>
+                      </div>
                     </div>
-                  </>
-                )}
+                  )}
+                </div>
               </div>
 
-
-
-
-
-
               {/* Word Count */}
-              <div>
-                <p className="text-sm text-[#979797]">Note Word Count</p>
-                <p className="text-2xl font-semibold">
+              <div className="flex flex-col items-center">
+                <span className="text-sm text-[#979797] mb-2">Note Word Count</span>
+                <span className="text-xl font-semibold">
                   {Number.isFinite(wordCount) && wordCount > 0 ? wordCount : '—'}
-                </p>
-
+                </span>
               </div>
 
               {/* Last Score (Stars) */}
-              <div>
-                <p className="text-sm text-[#979797]">Last Score</p>
-                <div className="text-2xl font-semibold flex items-center gap-1">
-                  {sessionStats?.lastStars && sessionStats.lastStars > 0 ? (
-                    <>
-                      {[1, 2, 3].map(starNum => (
-                        <StarSlot 
-                          key={starNum}
-                          filled={starNum <= sessionStats.lastStars} 
-                          size="1.5rem"
-                        />
-                      ))}
-                    </>
-                  ) : (
-                    <StarSlot filled={false} size="1.5rem" />
+              <div className="flex flex-col items-center">
+                <span className="text-sm text-[#979797] mb-2">Last Score</span>
+                <div className="flex flex-col items-center">
+                  <div className="flex items-center gap-1 mb-1">
+                    {sessionStats?.lastStars && sessionStats.lastStars > 0 ? (
+                      <>
+                        {[1, 2, 3].map(starNum => (
+                          <StarSlot 
+                            key={starNum}
+                            filled={starNum <= sessionStats.lastStars} 
+                            size="1.2rem"
+                          />
+                        ))}
+                      </>
+                    ) : (
+                      <>
+                        {[1, 2, 3].map(starNum => (
+                          <StarSlot 
+                            key={starNum}
+                            filled={false} 
+                            size="1.2rem"
+                          />
+                        ))}
+                      </>
+                    )}
+                  </div>
+                  <p className="text-xs text-[#C170FF]">
+                    {sessionStats.lastScore !== null
+                      ? `${(sessionStats.lastScore * 100).toFixed(1)}% (based on SimCSE)`
+                      : '— (based on SimCSE)'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Last Speed (WPM) */}
+              <div className="flex flex-col items-center">
+                <span className="text-sm text-[#979797] mb-2">Last Speed (WPM)</span>
+                <div className="flex flex-col items-center">
+                  <p className="text-xl font-semibold">
+                    {Number.isFinite(sessionStats?.sessions?.[0]?.wpm)
+                      ? sessionStats.sessions[0].wpm.toFixed(1)
+                      : '—'}
+                  </p>
+                  <p className="text-xs text-[#979797]">
+                    {Number.isFinite(sessionStats?.sessions?.[0]?.duration_secs)
+                      ? `(${formatTime(sessionStats.sessions[0].duration_secs)})`
+                      : ''}
+                  </p>
+                </div>
+              </div>
+
+              {/* Difficulty */}
+              <div className="flex flex-col items-center">
+                <span className="text-sm text-[#979797] mb-2">Difficulty</span>
+                <div className="flex flex-col items-center">
+                  <p className="text-xl font-semibold">
+                    {difficulty.level}
+                  </p>
+                  {difficulty.wpmLoad !== null && (
+                    <p className="text-xs text-[#C170FF]">
+                      [ WPM required = {difficulty.wpmLoad.toFixed(1)} ]
+                    </p>
                   )}
                 </div>
-                <p className="text-xs text-[#C170FF]">
-                  {sessionStats.lastScore !== null
-                    ? `${(sessionStats.lastScore * 100).toFixed(1)}%`
-                    : '—'}{" "}
-                  (based on SimCSE)
-                </p>
-              </div>
-
-              {/* WPM */}
-              <div>
-                <p className="text-sm text-[#979797] mt-4">Last Speed (WPM)</p>
-                <p className="text-xl font-semibold">
-                  {Number.isFinite(sessionStats?.sessions?.[0]?.wpm)
-                    ? sessionStats.sessions[0].wpm.toFixed(1)
-                    : '—'}
-                </p>
-                <p className="text-xs text-[#979797]">
-                  {Number.isFinite(sessionStats?.sessions?.[0]?.duration_secs)
-                    ? `(${formatTime(sessionStats.sessions[0].duration_secs)})`
-                    : ''}
-                </p>
-
-              </div>
-
-              {/* Difficulty Score */}
-              
-              <div>
-                <p className="text-sm text-[#979797]">Difficulty</p>
-                <p className="text-xl font-semibold">
-                  Difficulty: {difficulty.level}
-                </p>
-
-                {difficulty.wpmLoad !== null && (
-                  <p className="text-xs text-[#C170FF]">
-                    [ WPM required = {difficulty.wpmLoad} ]
-                  </p>
-                )}
               </div>
 
             </div>
@@ -866,30 +880,50 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Average Score - Bottom Section */}
+          {/* Average Score & Mastery Level - Bottom Section */}
           <div className="mt-6 pt-4 border-t border-[#E0E0E0]">
-            <div className="text-center">
-              <p className="text-sm text-[#979797] mb-2">Average Score</p>
-              <div className="flex items-center justify-center gap-1 mb-1">
-                {sessionStats.avgStars === 0 ? (
-                  <span className="text-xl font-semibold">—</span>
-                ) : (
-                  <>
-                    {[1, 2, 3].map(starNum => (
-                      <StarSlot 
-                        key={starNum}
-                        filled={starNum <= sessionStats.avgStars} 
-                        size="1.5rem"
-                      />
-                    ))}
-                  </>
-                )}
+            <div className="grid grid-cols-2 gap-4">
+              {/* Average Score */}
+              <div className="text-center">
+                <p className="text-sm text-[#979797] mb-2">Average Score</p>
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  {sessionStats.avgStars === 0 ? (
+                    <span className="text-xl font-semibold">—</span>
+                  ) : (
+                    <>
+                      {[1, 2, 3].map(starNum => (
+                        <StarSlot 
+                          key={starNum}
+                          filled={starNum <= sessionStats.avgStars} 
+                          size="1.5rem"
+                        />
+                      ))}
+                    </>
+                  )}
+                </div>
+                <p className="text-xs text-[#979797]">
+                  {sessionStats.avgScore !== null
+                    ? `${(sessionStats.avgScore * 100).toFixed(1)}%`
+                    : ''}
+                </p>
               </div>
-              <p className="text-xs text-[#979797]">
-                {sessionStats.avgScore !== null
-                  ? `${(sessionStats.avgScore * 100).toFixed(1)}%`
-                  : ''}
-              </p>
+
+              {/* Mastery Level */}
+              <div className="text-center">
+                <p className="text-sm text-[#979797] mb-2">Mastery Level</p>
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  {sessionStats.masteryLevel === null ? (
+                    <span className="text-xl font-semibold">—</span>
+                  ) : (
+                    <span className="text-xl font-semibold text-yellow-500">
+                      {sessionStats.masteryLevel.toFixed(0)}%
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-[#979797]">
+                  3-star sessions
+                </p>
+              </div>
             </div>
           </div>
 

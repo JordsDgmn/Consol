@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import LineChart from '@/components/LineChart';
+import StarSlot from '@/components/StarSlot';
 
 export default function FinishModal({
   score,
@@ -44,7 +45,15 @@ export default function FinishModal({
             <p className="text-xl font-bold text-[#A229FF] mb-2">
               Score: {score.toFixed(4)}
             </p>
-            <p className="text-3xl mb-6">{stars}</p>
+            <div className="flex justify-center gap-1 mb-6">
+              {[1, 2, 3].map((starIndex) => (
+                <StarSlot 
+                  key={starIndex} 
+                  filled={starIndex <= stars} 
+                  size="32px" 
+                />
+              ))}
+            </div>
           </>
         ) : (
           <p className="text-sm text-[#696969]">Score unavailable.</p>

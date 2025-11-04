@@ -31,13 +31,16 @@ export default function SessionPage() {
   const [initialNote, setInitialNote] = useState(null);
   
   const [score, setScore] = useState(null);
-  const [stars, setStars] = useState('✩');
+  const [stars, setStars] = useState(0);
   const [hintCount, setHintCount] = useState(0);
   const [allowHints, setAllowHints] = useState(
     searchParams.get('allowHints') === '1'
   );
   const [showFinishModal, setShowFinishModal] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
+  const [showHintModal, setShowHintModal] = useState(false);
+  const [isTimerPaused, setIsTimerPaused] = useState(false);
+  const [showRestartModal, setShowRestartModal] = useState(false);
 
   const [sessions, setSessions] = useState([]);
 
@@ -75,6 +78,10 @@ export default function SessionPage() {
       return;
     }
 
+    // Clear any previous session end data when starting a new session
+    // This ensures that new sessions from dashboard are always fresh
+    localStorage.removeItem('lastSessionEnd');
+
     const fetchNote = async () => {
       try {
         console.log("[🔍] Fetching note:", noteId, "for user:", user.id);
@@ -101,7 +108,7 @@ export default function SessionPage() {
 
   // Start interval timer
   useEffect(() => {
-    if (isFinished) return;
+    if (isFinished || isTimerPaused) return;
 
     intervalRef.current = setInterval(() => {
       setElapsed((prev) => prev + 1);
@@ -111,7 +118,7 @@ export default function SessionPage() {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     };
-  }, [isFinished]);
+  }, [isFinished, isTimerPaused]);
 
   // Auto-finish when time limit reached
   useEffect(() => {
@@ -172,11 +179,11 @@ export default function SessionPage() {
       setScore(result.similarity);
 
       let givenStars = 0;
-      if (result.similarity >= 0.90) givenStars = 3;
-      else if (result.similarity >= 0.70) givenStars = 2;
-      else if (result.similarity >= 0.45) givenStars = 1;
+      if (result.similarity >= 0.81) givenStars = 3;
+      else if (result.similarity >= 0.6) givenStars = 2;
+      else if (result.similarity >= 0.3) givenStars = 1;
 
-      setStars('⭐'.repeat(givenStars) || '✩');
+      setStars(givenStars);
 
       const duration_secs = Math.floor((Date.now() - startTimeRef.current) / 1000);
       const word_count = text.trim().split(/\s+/).filter(Boolean).length;
@@ -208,15 +215,25 @@ export default function SessionPage() {
       const sessionOnlyGroups = sessionOnly[initialNote.id] || [];
       const allSessionGroup = allGrouped[initialNote.id] || [];
 
+      // Find the group containing the current session (the one we just saved)
       let retryGroup = sessionOnlyGroups.find(g => g.some(s => s.id === saved?.id));
 
-      if (!retryGroup) {
+      if (!retryGroup && sessionOnlyGroups.length > 0) {
+        // If we can't find the exact session, use the most recent group
+        // Sort groups by their latest session time and take the most recent
+        const sortedGroups = sessionOnlyGroups.sort((a, b) => {
+          const latestA = Math.max(...a.map(s => new Date(s.created_at)));
+          const latestB = Math.max(...b.map(s => new Date(s.created_at)));
+          return latestB - latestA; // descending order (newest first)
+        });
+        retryGroup = sortedGroups[0];
+        console.log('[📊 Using most recent session group]', retryGroup);
+      } else if (!retryGroup) {
         console.warn('[⚠️ retryGroup IS EMPTY] Could not match saved session ID in sessionOnly groups');
         retryGroup = saved ? [saved] : [];
       }
 
       setSessionOnlyGroup(retryGroup);
-
       setAllSessionGroup(allSessionGroup);
 
       setTimeout(() => {
@@ -233,18 +250,91 @@ export default function SessionPage() {
 
 
   const handleRestart = () => {
+    setShowRestartModal(true);
+    setIsTimerPaused(true);
+  };
+
+  const handleTryAgain = () => {
     clearInterval(intervalRef.current);
     setElapsed(0);
     setScore(null);
-    setStars('✩');
+    setStars(0);
     setShowFinishModal(false);
     setHintCount(0);
     setIsFinished(false);
-    // preserve text for user convenience
+    setText(''); // Clear the text like it did before
+    startTimeRef.current = Date.now(); // Reset start time
+    // Timer will start automatically via useEffect
+  };
+
+  const confirmRestart = () => {
+    clearInterval(intervalRef.current);
+    setElapsed(0);
+    setScore(null);
+    setStars(0);
+    setShowFinishModal(false);
+    setShowRestartModal(false);
+    setHintCount(0);
+    setIsFinished(false);
+    setIsTimerPaused(false);
+    setText(''); // Clear the text for restart
+    startTimeRef.current = Date.now(); // Reset start time
+    // Timer will start automatically via useEffect
+  };
+
+  const cancelRestart = () => {
+    setShowRestartModal(false);
+    setIsTimerPaused(false);
+  };
+
+  const redactText = (text) => {
+    if (!text) return '';
+    
+    // Split text into words (including punctuation)
+    const words = text.split(/(\s+)/);
+    const actualWords = words.filter(word => word.trim() && !/^\s+$/.test(word));
+    
+    // Calculate 25% of actual words to redact
+    const wordsToRedact = Math.ceil(actualWords.length * 0.25);
+    
+    // Create array of indices for actual words
+    const wordIndices = [];
+    words.forEach((word, index) => {
+      if (word.trim() && !/^\s+$/.test(word)) {
+        wordIndices.push(index);
+      }
+    });
+    
+    // Randomly select words to redact
+    const selectedIndices = [];
+    while (selectedIndices.length < wordsToRedact && selectedIndices.length < wordIndices.length) {
+      const randomIndex = wordIndices[Math.floor(Math.random() * wordIndices.length)];
+      if (!selectedIndices.includes(randomIndex)) {
+        selectedIndices.push(randomIndex);
+      }
+    }
+    
+    // Replace selected words with underscores
+    return words.map((word, index) => {
+      if (selectedIndices.includes(index)) {
+        return '_'.repeat(Math.max(3, word.length));
+      }
+      return word;
+    }).join('');
   };
 
   const handleExit = () => {
     clearInterval(intervalRef.current);
+    
+    // Mark the session as "ended" by storing the end time in localStorage
+    // This will help the grouping logic know that this session was intentionally ended
+    const sessionEndData = {
+      noteId: initialNote?.id,
+      endTime: Date.now(),
+      userId: user?.id
+    };
+    localStorage.setItem('lastSessionEnd', JSON.stringify(sessionEndData));
+    
     router.push('/dashboard?refresh=1');
   };
 
@@ -281,7 +371,8 @@ export default function SessionPage() {
           }`}
           onClick={() => {
             if (!allowHints) return;
-            alert(initialNote?.content || 'Note not loaded yet.');
+            setShowHintModal(true);
+            setIsTimerPaused(true);
             setHintCount((prev) => prev + 1);
           }}
           disabled={!allowHints}
@@ -344,14 +435,14 @@ export default function SessionPage() {
           score={score}
           stars={stars}
           sessionData={{
-            allSessions, // ⬅️ all fetched sessions
-            sessionOnly: sessionOnlyGroup || [],
+            allSessions: allSessionGroup || [], // ⬅️ all sessions for this note (grouped)
+            sessionOnly: sessionOnlyGroup || [], // ⬅️ session-only group for this note
 
           }}
           lineChartData={chartData} 
           viewMode={viewMode}
           setViewMode={setViewMode}
-          handleRestart={handleRestart}
+          handleRestart={handleTryAgain}
           handleExit={handleExit}
           highlightId={highlightId}
         />
@@ -359,6 +450,80 @@ export default function SessionPage() {
 
       )}
 
+      {/* Restart Confirmation Modal */}
+      {showRestartModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center">
+          <div className="relative bg-white rounded-lg w-[500px] p-8 shadow-2xl text-black">
+            <h2 className="text-xl font-semibold mb-4 text-center">Restart Session</h2>
+            <p className="text-gray-600 mb-6 text-center">
+              Are you sure you want to restart this session? This will reset your timer and progress.
+            </p>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={cancelRestart}
+                className="px-6 py-3 bg-gray-200 rounded-lg text-gray-700 hover:bg-gray-300 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmRestart}
+                className="px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+              >
+                Restart
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hint Modal */}
+      {showHintModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center">
+          <div className="relative bg-white rounded-lg w-[600px] max-h-[70vh] p-8 shadow-2xl text-black">
+            {/* Close Button */}
+            <button
+              onClick={() => {
+                setShowHintModal(false);
+                setIsTimerPaused(false);
+              }}
+              className="absolute top-4 right-4 text-xl text-gray-600 hover:text-black"
+            >
+              ×
+            </button>
+
+            {/* Header */}
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">📝 Note Hint</h2>
+              <p className="text-sm text-gray-600">
+                Timer is paused while viewing this hint. Close to resume.
+              </p>
+            </div>
+
+            {/* Note Content */}
+            <div className="bg-gray-50 rounded-lg p-6 max-h-96 overflow-y-auto">
+              <div className="whitespace-pre-wrap text-gray-800 leading-relaxed">
+                {redactText(initialNote?.content) || 'Note content not available.'}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex justify-between items-center mt-6">
+              <p className="text-sm text-gray-500">
+                Hint #{hintCount} used
+              </p>
+              <button
+                onClick={() => {
+                  setShowHintModal(false);
+                  setIsTimerPaused(false);
+                }}
+                className="px-6 py-2 bg-[#C170FF] text-white rounded-lg hover:bg-[#A229FF] transition"
+              >
+                Resume Session
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </section>
   );

@@ -6,6 +6,7 @@ import { groupSessionsByNoteAndTime } from '@/utils/sessionUtils';
 import { useUser } from '@/lib/UserContext';
 import Calendar from '@/components/Calendar';
 import { computeRadarStats } from '@/utils/computeRadarStats';
+import { format } from 'date-fns';
 
 const RadarChart = dynamic(() => import('@/components/RadarChart'), { ssr: false });
 const LineChart = dynamic(() => import('@/components/LineChart'), { ssr: false });
@@ -431,8 +432,8 @@ export default function ProfilePage() {
                 setSelectedRow(row);
                 const idx = sortedSessions.findIndex((s) => s.id === row.id);
                 setSelectedRowIndex(idx);
-                // Use consistent date formatting
-                const dateStr = new Date(row.created_at).toISOString().substring(0, 10);
+                // Use consistent date formatting with Calendar component
+                const dateStr = format(new Date(row.created_at), 'yyyy-MM-dd');
                 setSelectedDate(dateStr);
               }}
             />
@@ -444,30 +445,105 @@ export default function ProfilePage() {
             </h2>
             {selectedRow ? (
               <>
-                <p className="text-sm mb-1">
-                  <span className="text-gray-600">Word Count (Notes):</span>{' '}
-                  <span className="text-purple-700 font-semibold">
-                    {originalWordCount}
-                  </span>
-                </p>
-                <p className="text-sm mb-1">
-                  <span className="text-gray-600">
-                    Word Count (Recollection):
-                  </span>{' '}
-                  <span className="text-purple-700 font-semibold">
-                    {selectedRow.word_count}
-                  </span>
-                </p>
-                <p className="text-sm mb-1">
-                  <span className="text-gray-600">Avg. Improvement (%):</span>{' '}
-                  <span className="text-purple-700 font-semibold">9</span>
-                </p>
-                <p className="text-sm mb-2">
-                  <span className="text-gray-600">Mastery Level:</span>{' '}
-                  <span className="text-yellow-500 font-semibold">
-                    {selectedRow.stars} ⭐
-                  </span>
-                </p>
+                {(() => {
+                  // Get current sessions based on view mode
+                  const selectedNoteId = selectedRow?.note_id;
+                  let currentData = [];
+
+                  if (selectedRow && selectedNoteId && groupedData[viewMode]) {
+                    if (viewMode === 'allSessions') {
+                      currentData = groupedData.allSessions[selectedNoteId] || [];
+                    } else {
+                      const group = (groupedData.sessionOnly[selectedNoteId] || []).find(g =>
+                        g.some(s => s.id === selectedRow.id)
+                      );
+                      currentData = group || [];
+                    }
+                  }
+                  
+                  const validSessions = Array.isArray(currentData) ? currentData.filter(s => 
+                    s && s.similarity !== null && s.similarity !== undefined && !isNaN(Number(s.similarity))
+                  ) : [];
+                  
+                  const avgScore = validSessions.length > 0
+                    ? validSessions.reduce((sum, s) => sum + Number(s.similarity), 0) / validSessions.length
+                    : null;
+                  
+                  const threeStarSessions = Array.isArray(currentData) ? currentData.filter(s => s && s.stars === 3) : [];
+                  const masteryLevel = currentData.length > 0 
+                    ? (threeStarSessions.length / currentData.length) * 100 
+                    : null;
+
+                  // Star calculation functions
+                  const getAvgStars = (score) => {
+                    if (score === null) return 0;
+                    if (score >= 0.81) return 3;
+                    else if (score >= 0.6) return 2;
+                    else if (score >= 0.3) return 1;
+                    else return 0;
+                  };
+
+                  const getSessionStars = (score) => {
+                    if (score === null) return 0;
+                    if (score >= 0.81) return 3;
+                    else if (score >= 0.6) return 2;
+                    else if (score >= 0.3) return 1;
+                    else return 0;
+                  };
+
+                  const avgStars = getAvgStars(avgScore);
+                  const sessionStars = getSessionStars(selectedRow.similarity);
+                    
+                  return (
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      {/* Left Column */}
+                      <div>
+                        <p className="mb-1">
+                          <span className="text-gray-600">Word Count (Notes):</span>{' '}
+                          <span className="text-purple-700 font-semibold">
+                            {originalWordCount}
+                          </span>
+                        </p>
+                        <p className="mb-1">
+                          <span className="text-gray-600">Word Count (Recollection):</span>{' '}
+                          <span className="text-purple-700 font-semibold">
+                            {selectedRow.word_count}
+                          </span>
+                        </p>
+                        <p className="mb-1">
+                          <span className="text-gray-600">Session Score:</span>{' '}
+                          <span className="text-purple-700 font-semibold">
+                            {'⭐'.repeat(sessionStars) || '✩'} 
+                            {selectedRow.similarity ? ` (${(selectedRow.similarity * 100).toFixed(1)}%)` : ' (N/A)'}
+                          </span>
+                        </p>
+                      </div>
+
+                      {/* Right Column */}
+                      <div>
+                        <p className="mb-1">
+                          <span className="text-gray-600">Average Score:</span>{' '}
+                          <span className="text-purple-700 font-semibold">
+                            {'⭐'.repeat(avgStars) || '✩'} 
+                            {avgScore !== null ? ` (${(avgScore * 100).toFixed(1)}%)` : ' (N/A)'}
+                          </span>
+                        </p>
+                        <p className="mb-1">
+                          <span className="text-gray-600">Mastery Level:</span>{' '}
+                          <span className="text-yellow-500 font-semibold">
+                            {masteryLevel !== null ? `${masteryLevel.toFixed(0)}%` : 'N/A'}
+                          </span>
+                        </p>
+                        <p className="mb-1">
+                          <span className="text-gray-600">Speed (WPM):</span>{' '}
+                          <span className="text-blue-700 font-semibold">
+                            {selectedRow.wpm ? selectedRow.wpm.toFixed(1) : 'N/A'}
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 <div className="flex items-center justify-center gap-2 mb-2">
                   <button
@@ -525,8 +601,8 @@ export default function ProfilePage() {
             selectedDate={selectedDate}
             onSelectDate={(session) => {
               setSelectedRow(session);
-              // Use consistent date formatting
-              const dateStr = new Date(session.created_at).toISOString().substring(0, 10);
+              // Use consistent date formatting with Calendar component
+              const dateStr = format(new Date(session.created_at), 'yyyy-MM-dd');
               setSelectedDate(dateStr);
               const idx = sortedSessions.findIndex((s) => s.id === session.id);
               setSelectedRowIndex(idx);
