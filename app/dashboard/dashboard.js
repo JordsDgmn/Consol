@@ -382,6 +382,7 @@ export default function Dashboard() {
             <button
               onClick={() => setShowModal(false)}
               className="absolute top-4 right-4 text-xl text-gray-600 hover:text-black"
+              title="Close Session Settings"
             >
               ×
             </button>
@@ -396,7 +397,12 @@ export default function Dashboard() {
                         ? 'Time Limit'
                         : 'Allow Hints'}
                     </span>
-                    <label className="relative inline-flex items-center cursor-pointer">
+                    <label 
+                      className="relative inline-flex items-center cursor-pointer"
+                      title={key === 'timeLimit' 
+                        ? 'Enable time limit for study sessions' 
+                        : 'Allow access to hints during study sessions'}
+                    >
                       <input
                         type="checkbox"
                         checked={toggles[key]}
@@ -451,6 +457,7 @@ export default function Dashboard() {
                             setTimeLimit(totalSecs);
                             saveTimeLimit(totalSecs);
                           }}
+                          title="Apply this time limit for the current session only"
                         >
                           Apply
                         </button>
@@ -462,6 +469,7 @@ export default function Dashboard() {
                             saveTimeLimit(totalSecs);
                             setTimeLimit(totalSecs);
                           }}
+                          title="Save this as the default time limit for all future sessions"
                         >
                           Set as Default
                         </button>
@@ -472,7 +480,7 @@ export default function Dashboard() {
               </div>
 
               {/* Word Count */}
-              <div className="flex flex-col items-center">
+              <div className="flex flex-col items-center" title="Total word count of the selected note">
                 <span className="text-sm text-[#979797] mb-2">Note Word Count</span>
                 <span className="text-xl font-semibold">
                   {Number.isFinite(wordCount) && wordCount > 0 ? wordCount : '—'}
@@ -480,7 +488,7 @@ export default function Dashboard() {
               </div>
 
               {/* Last Score (Stars) */}
-              <div className="flex flex-col items-center">
+              <div className="flex flex-col items-center" title="Star rating from your most recent study session">
                 <span className="text-sm text-[#979797] mb-2">Last Score</span>
                 <div className="flex flex-col items-center">
                   <div className="flex items-center gap-1 mb-1">
@@ -515,7 +523,7 @@ export default function Dashboard() {
               </div>
 
               {/* Last Speed (WPM) */}
-              <div className="flex flex-col items-center">
+              <div className="flex flex-col items-center" title="Words per minute from your most recent session">
                 <span className="text-sm text-[#979797] mb-2">Last Speed (WPM)</span>
                 <div className="flex flex-col items-center">
                   <p className="text-xl font-semibold">
@@ -532,7 +540,7 @@ export default function Dashboard() {
               </div>
 
               {/* Difficulty */}
-              <div className="flex flex-col items-center">
+              <div className="flex flex-col items-center" title="Calculated difficulty level based on note length and session performance">
                 <span className="text-sm text-[#979797] mb-2">Difficulty</span>
                 <div className="flex flex-col items-center">
                   <p className="text-xl font-semibold">
@@ -587,6 +595,7 @@ export default function Dashboard() {
                   }
                 }}
                 className="flex items-center gap-4 text-[#A229FF] bg-[#E9E9E9] px-8 py-4 text-lg font-semibold rounded-full border border-[#A229FF] shadow-md hover:shadow-lg"
+                title="Start a new study session with the selected note"
               >
                 <div className="w-[52px] h-[52px] rounded-full border-[4px] border-[#A229FF] bg-white flex items-center justify-center shadow">
                   <div className="w-0 h-0 border-t-[10px] border-b-[10px] border-l-[18px] border-t-transparent border-b-transparent border-l-[#A229FF] ml-1" />
@@ -606,6 +615,7 @@ export default function Dashboard() {
         <button
           onClick={handleCreateNote}
           className="w-full bg-white text-[#A229FF] border border-[#E0E0E0] rounded-full py-1 text-lg mb-4 hover:bg-[#A229FF] hover:outline hover:outline-2 hover:outline-green-300 hover:text-white hover:border-green-300 active:scale-95 transition"
+          title="Create New Note"
         >
           +
         </button>
@@ -615,12 +625,14 @@ export default function Dashboard() {
           <button
             onClick={() => setViewMode('list')}
             className={`rounded p-1 hover:bg-[#E5E7EB] ${viewMode === 'list' ? 'bg-[#F1E5FC]' : ''}`}
+            title="List View"
           >
             ☰
           </button>
           <button
             onClick={() => setViewMode('card')}
             className={`rounded p-1 hover:bg-[#E5E7EB] ${viewMode === 'card' ? 'bg-[#F1E5FC]' : ''}`}
+            title="Card View"
           >
             ⧉
           </button>
@@ -686,6 +698,7 @@ export default function Dashboard() {
                             deleteNote(note.id);
                           }}
                           className="opacity-0 group-hover:opacity-100 transition-opacity bg-red-100 hover:bg-red-200 text-red-600 hover:text-red-900 w-6 h-6 rounded-full flex items-center justify-center"
+                          title="Delete Note"
                         >
                           🗑️
                         </button>
@@ -701,6 +714,7 @@ export default function Dashboard() {
                             deleteNote(note.id);
                           }}
                           className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-red-100 hover:bg-red-200 text-red-600 hover:text-red-900 w-6 h-6 rounded-full flex items-center justify-center"
+                          title="Delete Note"
                         >
                           🗑️
                         </button>
@@ -770,6 +784,7 @@ export default function Dashboard() {
                     <button
                       onClick={handleSave}
                       className="text-xs px-3 py-1 rounded-full bg-[#C170FF] text-white shadow hover:brightness-110"
+                      title="Save Note (Ctrl+S)"
                     >
                       Save
                     </button>
@@ -786,6 +801,7 @@ export default function Dashboard() {
                       file:text-sm file:font-semibold 
                       file:bg-[#C170FF] file:text-white 
                       hover:file:bg-[#A229FF] cursor-pointer"
+                    title="Upload PDF, DOCX, or TXT file"
                   />
                 ) : (
                   showUploadDisabledMsg && (
@@ -827,7 +843,7 @@ export default function Dashboard() {
         <div className="bg-[#F8F8F8] rounded-xl p-4 mb-4">
           <div className="grid grid-cols-2 gap-6 text-xs">
             {/* Word Count */}
-            <div className="text-center">
+            <div className="text-center" title="Total word count of the selected note">
               <p className="text-sm text-[#979797] mb-2">Note Word Count</p>
               <p className="text-2xl font-semibold">
                 {Number.isFinite(wordCount) && wordCount > 0 ? wordCount : '—'}
@@ -835,7 +851,7 @@ export default function Dashboard() {
             </div>
 
             {/* Attempts Made */}
-            <div className="text-center">
+            <div className="text-center" title="Total number of study sessions completed for this note">
               <p className="text-sm text-[#979797] mb-2">Attempts Made</p>
               <p className="text-2xl font-semibold">
                 {sessionStats?.attempts ?? 0}
@@ -843,7 +859,7 @@ export default function Dashboard() {
             </div>
 
             {/* Last Session */}
-            <div className="text-center">
+            <div className="text-center" title="Date and time of your most recent study session">
               <p className="text-sm text-[#979797] mb-2">Last Session</p>
               <div className="text-lg font-semibold">
                 {sessionStats?.sessions?.[0]?.created_at ? (
@@ -870,7 +886,7 @@ export default function Dashboard() {
             </div>
 
             {/* Last Speed (WPM) */}
-            <div className="text-center">
+            <div className="text-center" title="Words per minute from your most recent session">
               <p className="text-sm text-[#979797] mb-2">Last Speed (WPM)</p>
               <p className="text-2xl font-semibold">
                 {Number.isFinite(sessionStats?.sessions?.[0]?.wpm)
@@ -884,7 +900,7 @@ export default function Dashboard() {
           <div className="mt-6 pt-4 border-t border-[#E0E0E0]">
             <div className="grid grid-cols-2 gap-4">
               {/* Average Score */}
-              <div className="text-center">
+              <div className="text-center" title="Average star rating across all sessions for this note">
                 <p className="text-sm text-[#979797] mb-2">Average Score</p>
                 <div className="flex items-center justify-center gap-1 mb-1">
                   {sessionStats.avgStars === 0 ? (
@@ -909,7 +925,7 @@ export default function Dashboard() {
               </div>
 
               {/* Mastery Level */}
-              <div className="text-center">
+              <div className="text-center" title="Percentage of your sessions that achieved 3 stars (mastery level)">
                 <p className="text-sm text-[#979797] mb-2">Mastery Level</p>
                 <div className="flex items-center justify-center gap-1 mb-1">
                   {sessionStats.masteryLevel === null ? (
