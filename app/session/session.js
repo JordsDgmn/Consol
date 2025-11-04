@@ -501,7 +501,22 @@ export default function SessionPage() {
 
             {/* Note Content */}
             <div className="bg-gray-50 rounded-lg p-6 max-h-96 overflow-y-auto">
-              <div className="whitespace-pre-wrap text-gray-800 leading-relaxed">
+              <div 
+                className="whitespace-pre-wrap text-gray-800 leading-relaxed select-none"
+                style={{
+                  userSelect: 'none',
+                  WebkitUserSelect: 'none',
+                  MozUserSelect: 'none',
+                  msUserSelect: 'none',
+                  WebkitTouchCallout: 'none',
+                  WebkitTapHighlightColor: 'transparent'
+                }}
+                onContextMenu={(e) => e.preventDefault()}
+                onDragStart={(e) => e.preventDefault()}
+                onSelectStart={(e) => e.preventDefault()}
+                onCopy={(e) => e.preventDefault()}
+                onCut={(e) => e.preventDefault()}
+              >
                 {redactText(initialNote?.content) || 'Note content not available.'}
               </div>
             </div>
