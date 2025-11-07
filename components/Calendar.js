@@ -53,14 +53,14 @@ const Calendar = ({ sessions, onSelectDate, selectedDate }) => {
     const daySessions = dailyData[dateKey];
     if (!daySessions || daySessions.length === 0) return [];
 
-    // Calculate average similarity for the day
-    const avgSimilarity = daySessions.reduce((sum, s) => sum + (s.similarity || 0), 0) / daySessions.length;
+    // Find the highest similarity score for the day (best session)
+    const bestSimilarity = Math.max(...daySessions.map(s => s.similarity || 0));
     
-    // Map similarity to star slots (0-3 filled stars)
+    // Map best similarity to star slots (0-3 filled stars)
     let filledStars = 0;
-    if (avgSimilarity >= 0.81) filledStars = 3;     // 81%+ = 3 stars
-    else if (avgSimilarity >= 0.6) filledStars = 2; // 60-80% = 2 stars  
-    else if (avgSimilarity >= 0.3) filledStars = 1; // 30-59% = 1 star
+    if (bestSimilarity >= 0.81) filledStars = 3;     // 81%+ = 3 stars
+    else if (bestSimilarity >= 0.6) filledStars = 2; // 60-80% = 2 stars  
+    else if (bestSimilarity >= 0.3) filledStars = 1; // 30-59% = 1 star
     else filledStars = 0;                            // <30% = 0 stars
 
     // Always return 3 slots, fill based on performance

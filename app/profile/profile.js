@@ -513,7 +513,7 @@ export default function ProfilePage() {
                         <p className="mb-1">
                           <span className="text-gray-600">Session Score:</span>{' '}
                           <span className="text-purple-700 font-semibold">
-                            {'⭐'.repeat(sessionStars) || '✩'} 
+                            {sessionStars > 0 ? '⭐'.repeat(sessionStars) : '(no stars)'} 
                             {selectedRow.similarity ? ` (${(selectedRow.similarity * 100).toFixed(1)}%)` : ' (N/A)'}
                           </span>
                         </p>
@@ -524,7 +524,7 @@ export default function ProfilePage() {
                         <p className="mb-1">
                           <span className="text-gray-600">Average Score:</span>{' '}
                           <span className="text-purple-700 font-semibold">
-                            {'⭐'.repeat(avgStars) || '✩'} 
+                            {avgStars > 0 ? '⭐'.repeat(avgStars) : '(no stars)'} 
                             {avgScore !== null ? ` (${(avgScore * 100).toFixed(1)}%)` : ' (N/A)'}
                           </span>
                         </p>
@@ -538,6 +538,12 @@ export default function ProfilePage() {
                           <span className="text-gray-600">Speed (WPM):</span>{' '}
                           <span className="text-blue-700 font-semibold">
                             {selectedRow.wpm ? selectedRow.wpm.toFixed(1) : 'N/A'}
+                          </span>
+                        </p>
+                        <p className="mb-1">
+                          <span className="text-gray-600">Hints Used:</span>{' '}
+                          <span className="text-orange-600 font-semibold">
+                            {selectedRow.hints_used || 0}
                           </span>
                         </p>
                       </div>

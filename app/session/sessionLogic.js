@@ -66,6 +66,7 @@ export async function saveSessionMetadata({
   word_count,
   duration_secs,
   wpm,
+  hints_used,
 }) {
   try {
     const res = await fetch('/api/sessions', {
@@ -79,6 +80,7 @@ export async function saveSessionMetadata({
         word_count,
         duration_secs,
         wpm,
+        hints_used,
       }),
     });
 

@@ -197,6 +197,7 @@ export default function SessionPage() {
         word_count,
         duration_secs,
         wpm,
+        hints_used: hintCount,
       });
 
       console.log('💾 Saved session:', saved);
