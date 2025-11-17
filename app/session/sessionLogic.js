@@ -58,6 +58,22 @@ export function getDifficultyLevel(wordCount, timeLimitSeconds) {
 
 
 
+export function generateSessionGroupId() {
+  return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
+export function getCurrentSessionGroupId() {
+  return sessionStorage.getItem('currentSessionGroupId');
+}
+
+export function setCurrentSessionGroupId(groupId) {
+  sessionStorage.setItem('currentSessionGroupId', groupId);
+}
+
+export function clearCurrentSessionGroupId() {
+  sessionStorage.removeItem('currentSessionGroupId');
+}
+
 export async function saveSessionMetadata({
   user_id,
   note_id,
@@ -67,6 +83,7 @@ export async function saveSessionMetadata({
   duration_secs,
   wpm,
   hints_used,
+  session_group_id = null,
 }) {
   try {
     const res = await fetch('/api/sessions', {
@@ -81,6 +98,7 @@ export async function saveSessionMetadata({
         duration_secs,
         wpm,
         hints_used,
+        session_group_id,
       }),
     });
 

@@ -57,8 +57,15 @@ export default function Dashboard() {
     verbatim: true,
   });
 
-  const toggleSwitch = (key) =>
+  const toggleSwitch = (key) => {
     setToggles((prev) => ({ ...prev, [key]: !prev[key] }));
+    
+    // Initialize original time when opening modal
+    if (key === 'timeLimit' && !toggles[key]) {
+      setOriginalTimeLimit(getTimeLimit());
+      setDurationInput(formatTime(getTimeLimit()));
+    }
+  };
 
   /* ────────────────────────────────────────────────
   📥 4. Notes Fetching on First Load
@@ -321,6 +328,10 @@ export default function Dashboard() {
   const [durationInput, setDurationInput] = useState(
     formatTime(getTimeLimit())
   );
+  
+  // Track original time and confirmation message
+  const [originalTimeLimit, setOriginalTimeLimit] = useState(getTimeLimit());
+  const [defaultSetMessage, setDefaultSetMessage] = useState('');
 
 
 
@@ -442,38 +453,184 @@ export default function Dashboard() {
                     <p className="text-xl font-semibold">Unlimited</p>
                   ) : (
                     <div className="flex flex-col items-center">
-                      <input
-                        type="text"
-                        value={durationInput}
-                        onChange={(e) => setDurationInput(e.target.value)}
-                        className="text-xl font-semibold text-center w-32 border-b border-black outline-none mb-1"
-                      />
-                      <div className="flex gap-2 text-xs">
-                        <button
-                          className="text-[#C170FF] underline hover:text-[#A229FF] hover:cursor-pointer hover:border-b hover:border-[#A229FF]"
-                          onClick={() => {
-                            const parts = durationInput.split(':').map(Number);
-                            const totalSecs = parts[0] * 3600 + parts[1] * 60 + parts[2];
-                            setTimeLimit(totalSecs);
-                            saveTimeLimit(totalSecs);
-                          }}
-                          title="Apply this time limit for the current session only"
-                        >
-                          Apply
-                        </button>
-                        <button
-                          className="text-[#C170FF] underline hover:text-[#A229FF] hover:cursor-pointer hover:border-b hover:border-[#A229FF]"
-                          onClick={() => {
-                            const parts = durationInput.split(':').map(Number);
-                            const totalSecs = parts[0] * 3600 + parts[1] * 60 + parts[2];
-                            saveTimeLimit(totalSecs);
-                            setTimeLimit(totalSecs);
-                          }}
-                          title="Save this as the default time limit for all future sessions"
-                        >
-                          Set as Default
-                        </button>
+                      {/* Time Input with Incrementors */}
+                      <div className="flex items-center gap-1 mb-2">
+                        {/* Hours */}
+                        <div className="flex flex-col items-center">
+                          <button
+                            onClick={() => {
+                              const parts = durationInput.split(':').map(Number);
+                              parts[0] = Math.min(23, parts[0] + 1);
+                              setDurationInput(parts.map(p => p.toString().padStart(2, '0')).join(':'));
+                            }}
+                            className="text-xs text-gray-600 hover:text-purple-600 px-1"
+                          >
+                            ▲
+                          </button>
+                          <input
+                            type="text"
+                            value={durationInput.split(':')[0]}
+                            onChange={(e) => {
+                              const parts = durationInput.split(':');
+                              parts[0] = e.target.value.padStart(2, '0');
+                              setDurationInput(parts.join(':'));
+                            }}
+                            className="text-lg font-semibold text-center w-8 border-b border-gray-300 outline-none"
+                            maxLength="2"
+                          />
+                          <button
+                            onClick={() => {
+                              const parts = durationInput.split(':').map(Number);
+                              parts[0] = Math.max(0, parts[0] - 1);
+                              setDurationInput(parts.map(p => p.toString().padStart(2, '0')).join(':'));
+                            }}
+                            className="text-xs text-gray-600 hover:text-purple-600 px-1"
+                          >
+                            ▼
+                          </button>
+                          <span className="text-xs text-gray-500 mt-1">h</span>
+                        </div>
+                        
+                        <span className="text-lg font-semibold mx-1">:</span>
+                        
+                        {/* Minutes */}
+                        <div className="flex flex-col items-center">
+                          <button
+                            onClick={() => {
+                              const parts = durationInput.split(':').map(Number);
+                              parts[1] = Math.min(59, parts[1] + 1);
+                              setDurationInput(parts.map(p => p.toString().padStart(2, '0')).join(':'));
+                            }}
+                            className="text-xs text-gray-600 hover:text-purple-600 px-1"
+                          >
+                            ▲
+                          </button>
+                          <input
+                            type="text"
+                            value={durationInput.split(':')[1]}
+                            onChange={(e) => {
+                              const parts = durationInput.split(':');
+                              parts[1] = e.target.value.padStart(2, '0');
+                              setDurationInput(parts.join(':'));
+                            }}
+                            className="text-lg font-semibold text-center w-8 border-b border-gray-300 outline-none"
+                            maxLength="2"
+                          />
+                          <button
+                            onClick={() => {
+                              const parts = durationInput.split(':').map(Number);
+                              parts[1] = Math.max(0, parts[1] - 1);
+                              setDurationInput(parts.map(p => p.toString().padStart(2, '0')).join(':'));
+                            }}
+                            className="text-xs text-gray-600 hover:text-purple-600 px-1"
+                          >
+                            ▼
+                          </button>
+                          <span className="text-xs text-gray-500 mt-1">m</span>
+                        </div>
+                        
+                        <span className="text-lg font-semibold mx-1">:</span>
+                        
+                        {/* Seconds */}
+                        <div className="flex flex-col items-center">
+                          <button
+                            onClick={() => {
+                              const parts = durationInput.split(':').map(Number);
+                              parts[2] = Math.min(59, parts[2] + 1);
+                              setDurationInput(parts.map(p => p.toString().padStart(2, '0')).join(':'));
+                            }}
+                            className="text-xs text-gray-600 hover:text-purple-600 px-1"
+                          >
+                            ▲
+                          </button>
+                          <input
+                            type="text"
+                            value={durationInput.split(':')[2]}
+                            onChange={(e) => {
+                              const parts = durationInput.split(':');
+                              parts[2] = e.target.value.padStart(2, '0');
+                              setDurationInput(parts.join(':'));
+                            }}
+                            className="text-lg font-semibold text-center w-8 border-b border-gray-300 outline-none"
+                            maxLength="2"
+                          />
+                          <button
+                            onClick={() => {
+                              const parts = durationInput.split(':').map(Number);
+                              parts[2] = Math.max(0, parts[2] - 1);
+                              setDurationInput(parts.map(p => p.toString().padStart(2, '0')).join(':'));
+                            }}
+                            className="text-xs text-gray-600 hover:text-purple-600 px-1"
+                          >
+                            ▼
+                          </button>
+                          <span className="text-xs text-gray-500 mt-1">s</span>
+                        </div>
                       </div>
+                      
+                      {/* Action Buttons */}
+                      <div className="flex gap-2 text-xs">
+                        {(() => {
+                          const parts = durationInput.split(':').map(Number);
+                          const currentTotalSecs = parts[0] * 3600 + parts[1] * 60 + parts[2];
+                          const hasChanged = currentTotalSecs !== originalTimeLimit;
+                          
+                          return (
+                            <>
+                              <button
+                                className={`underline hover:cursor-pointer hover:border-b transition ${
+                                  hasChanged 
+                                    ? 'text-[#C170FF] hover:text-[#A229FF] hover:border-[#A229FF]' 
+                                    : 'text-gray-400 cursor-not-allowed'
+                                }`}
+                                onClick={() => {
+                                  if (hasChanged) {
+                                    setTimeLimit(currentTotalSecs);
+                                  }
+                                }}
+                                disabled={!hasChanged}
+                                title={hasChanged ? "Apply this time limit for the current session only" : "No changes to apply"}
+                              >
+                                Apply
+                              </button>
+                              {hasChanged && (
+                                <button
+                                  className="text-[#C170FF] underline hover:text-[#A229FF] hover:cursor-pointer hover:border-b hover:border-[#A229FF]"
+                                  onClick={() => {
+                                    saveTimeLimit(currentTotalSecs);
+                                    setTimeLimit(currentTotalSecs);
+                                    setOriginalTimeLimit(currentTotalSecs);
+                                    
+                                    // Show confirmation message
+                                    const hours = Math.floor(currentTotalSecs / 3600);
+                                    const minutes = Math.floor((currentTotalSecs % 3600) / 60);
+                                    const seconds = currentTotalSecs % 60;
+                                    
+                                    let timeText = '';
+                                    if (hours > 0) timeText += `${hours} hour${hours !== 1 ? 's' : ''} `;
+                                    if (minutes > 0) timeText += `${minutes} minute${minutes !== 1 ? 's' : ''} `;
+                                    if (seconds > 0) timeText += `${seconds} second${seconds !== 1 ? 's' : ''}`;
+                                    timeText = timeText.trim();
+                                    
+                                    setDefaultSetMessage(`${timeText} set as default`);
+                                    setTimeout(() => setDefaultSetMessage(''), 3000);
+                                  }}
+                                  title="Save this as the default time limit for all future sessions"
+                                >
+                                  Set as Default
+                                </button>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </div>
+                      
+                      {/* Confirmation Message */}
+                      {defaultSetMessage && (
+                        <p className="text-xs text-green-600 mt-2 text-center">
+                          {defaultSetMessage}
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -541,7 +698,7 @@ export default function Dashboard() {
 
               {/* Difficulty */}
               <div className="flex flex-col items-center" title="Calculated difficulty level based on note length and session performance">
-                <span className="text-sm text-[#979797] mb-2">Difficulty</span>
+                <span className="text-sm text-[#979797] mb-2">Difficulty (estimate)</span>
                 <div className="flex flex-col items-center">
                   <p className="text-xl font-semibold">
                     {difficulty.level}

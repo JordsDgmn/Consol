@@ -19,6 +19,12 @@ export default function FinishModal({
     console.log('[📈 SESSION ONLY DATA]', sessionData.sessionOnly);
     console.log('[📈 ALL SESSIONS DATA]', sessionData.allSessions);
     console.log('[⭐ HIGHLIGHT ID]', highlightId);
+    console.log('[🔍 DEBUGGING] sessionData structure:', {
+      sessionOnlyLength: sessionData.sessionOnly?.length,
+      allSessionsLength: sessionData.allSessions?.length,
+      sessionOnlyFirst: sessionData.sessionOnly?.[0],
+      isArray: Array.isArray(sessionData.sessionOnly)
+    });
   }, [sessionData, highlightId]);
 
   useEffect(() => {
@@ -42,10 +48,16 @@ export default function FinishModal({
         <h2 className="text-lg font-semibold mb-4">Similarity Score</h2>
         {typeof score === 'number' ? (
           <>
-            <p className="text-xl font-bold text-[#A229FF] mb-2">
+            <p 
+              className="text-xl font-bold text-[#A229FF] mb-2 cursor-help"
+              title="SimCSE similarity score: Measures semantic similarity between your note and recollection using AI. Range: 0.0000 (no similarity) to 1.0000 (perfect match)"
+            >
               Score: {score.toFixed(4)}
             </p>
-            <div className="flex justify-center gap-1 mb-6">
+            <div 
+              className="flex justify-center gap-1 mb-6 cursor-help"
+              title="Star rating based on similarity thresholds: 3 stars (≥81%), 2 stars (≥60%), 1 star (≥30%), 0 stars (<30%)"
+            >
               {[1, 2, 3].map((starIndex) => (
                 <StarSlot 
                   key={starIndex} 
@@ -71,6 +83,7 @@ export default function FinishModal({
                 : 'bg-white border'
             }`}
             onClick={() => setViewMode('sessionOnly')}
+            title="Session Only: Shows current consecutive session attempts and retries for this specific note. Resets when you exit and start a new session."
           >
             session only
           </button>
@@ -81,6 +94,7 @@ export default function FinishModal({
                 : 'bg-white border'
             }`}
             onClick={() => setViewMode('allSessions')}
+            title="All Sessions: Shows every session attempt for this note across all time, including previous days and study periods."
           >
             all sessions
           </button>
@@ -90,6 +104,7 @@ export default function FinishModal({
           <button
             onClick={handleRestart}
             className="flex items-center gap-2 px-6 py-3 bg-white border border-[#A229FF] rounded-full text-[#A229FF] shadow-md hover:brightness-110"
+            title="Try Again: Start a new session with the same note. Your previous attempt will be saved and this will count as another trial."
           >
             <div className="w-0 h-0 border-t-[8px] border-b-[8px] border-l-[14px] border-t-transparent border-b-transparent border-l-[#A229FF] ml-1" />
             Try Again
@@ -97,6 +112,7 @@ export default function FinishModal({
           <button
             onClick={handleExit}
             className="px-6 py-3 bg-white border border-[#D9D9D9] rounded-full text-[#696969] shadow-md hover:bg-[#F3F3F3]"
+            title="Exit Session: Return to the dashboard. Your session results have been saved to your profile analytics."
           >
             Exit Session
           </button>

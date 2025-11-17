@@ -43,14 +43,16 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { user_id, note_id, similarity, stars, word_count, duration_secs, wpm, hints_used } = await req.json();
+    const { user_id, note_id, similarity, stars, word_count, duration_secs, wpm, hints_used, session_group_id } = await req.json();
 
     const result = await pool.query(
-      `INSERT INTO sessions (user_id, note_id, similarity, stars, word_count, duration_secs, wpm, hints_used)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO sessions (user_id, note_id, similarity, stars, word_count, duration_secs, wpm, hints_used, session_group_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
-      [user_id, note_id, similarity, stars, word_count, duration_secs, wpm, hints_used || 0]
+      [user_id, note_id, similarity, stars, word_count, duration_secs, wpm, hints_used || 0, session_group_id || null]
     );
+    
+    return NextResponse.json(result.rows[0], { status: 201 });
 
     return NextResponse.json(result.rows[0], { status: 201 });
   } catch (error) {

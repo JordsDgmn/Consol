@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { defaultSessionSettings, formatTime, saveSessionMetadata } from './sessionLogic';
+import { defaultSessionSettings, formatTime, saveSessionMetadata, generateSessionGroupId, getCurrentSessionGroupId, setCurrentSessionGroupId, clearCurrentSessionGroupId } from './sessionLogic';
 import { useUser } from '@/lib/UserContext';
 import { getTimeLimit } from './sessionLogic';
 import dynamic from 'next/dynamic';
@@ -81,6 +81,12 @@ export default function SessionPage() {
     // Clear any previous session end data when starting a new session
     // This ensures that new sessions from dashboard are always fresh
     localStorage.removeItem('lastSessionEnd');
+    
+    // Generate a new session group ID for fresh sessions (not retries)
+    if (!getCurrentSessionGroupId()) {
+      const newGroupId = generateSessionGroupId();
+      setCurrentSessionGroupId(newGroupId);
+    }
 
     const fetchNote = async () => {
       try {
@@ -198,6 +204,7 @@ export default function SessionPage() {
         duration_secs,
         wpm,
         hints_used: hintCount,
+        session_group_id: getCurrentSessionGroupId(),
       });
 
       console.log('💾 Saved session:', saved);
@@ -255,7 +262,7 @@ export default function SessionPage() {
     setIsTimerPaused(true);
   };
 
-  const handleTryAgain = () => {
+  const handleTryAgain = async () => {
     clearInterval(intervalRef.current);
     setElapsed(0);
     setScore(null);
@@ -265,6 +272,55 @@ export default function SessionPage() {
     setIsFinished(false);
     setText(''); // Clear the text like it did before
     startTimeRef.current = Date.now(); // Reset start time
+    
+    // Keep the same session group ID to mark this as a retry
+    // Don't generate a new one - this links it to the previous attempt
+    
+    // Refresh session data to include all previous attempts in the current group
+    // This ensures the FinishModal shows the complete retry history
+    try {
+      const response = await fetch(`/api/sessions?userId=${user.id}&noteId=${initialNote.id}`);
+      const sessionData = await response.json();
+      const allSessions = Array.isArray(sessionData.sessions) ? sessionData.sessions : [];
+      setSessions(allSessions);
+      
+      const { groupSessionsByNoteAndTime } = await import('@/utils/sessionUtils');
+      const { sessionOnly, allSessions: allGrouped } = groupSessionsByNoteAndTime(allSessions);
+      
+      const sessionOnlyGroups = sessionOnly[initialNote.id] || [];
+      const allSessionGroup = allGrouped[initialNote.id] || [];
+      
+      // Find the current session group (the one we're continuing)
+      const currentGroupId = getCurrentSessionGroupId();
+      let currentRetryGroup = sessionOnlyGroups.find(group => 
+        group.some(s => s.session_group_id === currentGroupId)
+      );
+      
+      if (!currentRetryGroup && sessionOnlyGroups.length > 0) {
+        // If we can't find by group ID, use the most recent group
+        currentRetryGroup = sessionOnlyGroups.sort((a, b) => {
+          const latestA = Math.max(...a.map(s => new Date(s.created_at)));
+          const latestB = Math.max(...b.map(s => new Date(s.created_at)));
+          return latestB - latestA;
+        })[0];
+      }
+      
+      setSessionOnlyGroup(currentRetryGroup || []);
+      setAllSessionGroup(allSessionGroup);
+      
+      console.log('[🔄 Try Again] Refreshed session data:', {
+        allSessions: allSessions.length,
+        sessionOnlyGroups: sessionOnlyGroups.length,
+        currentRetryGroup: currentRetryGroup?.length,
+        groupId: currentGroupId,
+        firstSession: currentRetryGroup?.[0],
+        sessionGroupIds: allSessions.map(s => ({ id: s.id, group_id: s.session_group_id }))
+      });
+      
+    } catch (err) {
+      console.error('[❌ Failed to refresh session data on Try Again]', err);
+    }
+    
     // Timer will start automatically via useEffect
   };
 
@@ -326,6 +382,9 @@ export default function SessionPage() {
 
   const handleExit = () => {
     clearInterval(intervalRef.current);
+    
+    // Clear session group ID when exiting to dashboard
+    clearCurrentSessionGroupId();
     
     // Mark the session as "ended" by storing the end time in localStorage
     // This will help the grouping logic know that this session was intentionally ended

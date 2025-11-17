@@ -4,59 +4,39 @@ export function groupSessionsByNoteAndTime(sessions) {
 
   // Group all sessions by note_id
   sessions.forEach(session => {
-    const { note_id, created_at } = session;
+    const { note_id } = session;
 
     if (!allSessions[note_id]) allSessions[note_id] = [];
     allSessions[note_id].push(session);
   });
 
-  // Sort and group consecutive ones
+  // For sessionOnly, group sessions by session_group_id and show only the most recent group
   for (const noteId in allSessions) {
-    const sorted = allSessions[noteId].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-    const groups = [];
-    let group = [sorted[0]];
-
-    for (let i = 1; i < sorted.length; i++) {
-      const prev = new Date(sorted[i - 1].created_at);
-      const curr = new Date(sorted[i].created_at);
-      const diff = (curr - prev) / 1000; // in seconds
-
-      // Check if there was an intentional session end between these sessions
-      const wasSessionEndedBetween = checkForSessionEndBetween(prev, curr, noteId);
-
-      if (diff <= 300 && !wasSessionEndedBetween) {
-        group.push(sorted[i]);
-      } else {
-        groups.push(group);
-        group = [sorted[i]];
+    const sorted = allSessions[noteId].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    
+    // Group sessions by session_group_id
+    const groupMap = {};
+    sorted.forEach(session => {
+      const groupId = session.session_group_id || `single_${session.id}`;
+      if (!groupMap[groupId]) {
+        groupMap[groupId] = [];
       }
-    }
-    groups.push(group);
-    sessionOnly[noteId] = groups;
+      groupMap[groupId].push(session);
+    });
+    
+    // Sort groups by most recent session and take only the most recent group (current retry sequence)
+    const groups = Object.values(groupMap)
+      .map(group => group.sort((a, b) => new Date(a.created_at) - new Date(b.created_at)))
+      .sort((groupA, groupB) => 
+        new Date(groupB[groupB.length - 1].created_at) - new Date(groupA[groupA.length - 1].created_at)
+      );
+    
+    // Only include the most recent group (current retry sequence)
+    sessionOnly[noteId] = groups.length > 0 ? [groups[0]] : [];
   }
 
   return { allSessions, sessionOnly };
 }
-
-function checkForSessionEndBetween(prevTime, currTime, noteId) {
-  try {
-    const lastSessionEnd = localStorage.getItem('lastSessionEnd');
-    if (!lastSessionEnd) return false;
-
-    const sessionEndData = JSON.parse(lastSessionEnd);
-    if (sessionEndData.noteId !== noteId) return false;
-
-    const endTime = new Date(sessionEndData.endTime);
-    
-    // Check if the session end happened between these two sessions
-    return endTime > prevTime && endTime < currTime;
-  } catch (error) {
-    console.warn('Error checking session end:', error);
-    return false;
-  }
-}
-
-
 
 // Stat Criteria:
 
