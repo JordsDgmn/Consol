@@ -479,7 +479,7 @@ export default function ProfilePage() {
                     if (score === null) return 0;
                     if (score >= 0.81) return 3;
                     else if (score >= 0.6) return 2;
-                    else if (score >= 0.3) return 1;
+                    else if (score >= 0.44) return 1;
                     else return 0;
                   };
 
@@ -487,7 +487,7 @@ export default function ProfilePage() {
                     if (score === null) return 0;
                     if (score >= 0.81) return 3;
                     else if (score >= 0.6) return 2;
-                    else if (score >= 0.3) return 1;
+                    else if (score >= 0.44) return 1;
                     else return 0;
                   };
 

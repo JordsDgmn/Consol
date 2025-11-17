@@ -56,7 +56,7 @@ export default function FinishModal({
             </p>
             <div 
               className="flex justify-center gap-1 mb-6 cursor-help"
-              title="Star rating based on similarity thresholds: 3 stars (≥81%), 2 stars (≥60%), 1 star (≥30%), 0 stars (<30%)"
+              title="Star rating based on similarity thresholds: 3 stars (≥81%), 2 stars (≥60%), 1 star (≥44%), 0 stars (<44%)"
             >
               {[1, 2, 3].map((starIndex) => (
                 <StarSlot 

@@ -187,7 +187,7 @@ export default function SessionPage() {
       let givenStars = 0;
       if (result.similarity >= 0.81) givenStars = 3;
       else if (result.similarity >= 0.6) givenStars = 2;
-      else if (result.similarity >= 0.3) givenStars = 1;
+      else if (result.similarity >= 0.44) givenStars = 1;
 
       setStars(givenStars);
 

@@ -159,7 +159,7 @@ export default function Dashboard() {
       if (avgScore !== null) {
         if (avgScore >= 0.81) avgStars = 3;       // 81% for 3 stars
         else if (avgScore >= 0.6) avgStars = 2;   // 60% for 2 stars  
-        else if (avgScore >= 0.3) avgStars = 1;   // 30% for 1 star
+        else if (avgScore >= 0.44) avgStars = 1;  // 44% for 1 star
         else avgStars = 0;
       }
 
