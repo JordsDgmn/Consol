@@ -39,8 +39,8 @@ export default function Navbar() {
             <button
               className={`px-4 py-1 border rounded transition ${
                 pathname === '/dashboard'
-                  ? 'bg-white text-black border-gray-300  hover:bg-gray-300 '
-                  : 'border-white text-black hover:bg-purple-100 '
+                  ? 'bg-white text-black border-gray-300 cursor-default'
+                  : 'border-white text-black hover:bg-purple-100'
               }`}
             >
               Dashboard
@@ -51,8 +51,8 @@ export default function Navbar() {
             <button
               className={`px-4 py-1 border rounded transition ${
                 pathname === '/profile'
-                  ? 'bg-white border-gray-300  text-black '
-                  : 'border-white text-black hover:bg-purple-100 '
+                  ? 'bg-white border-gray-300 text-black cursor-default'
+                  : 'border-white text-black hover:bg-purple-100'
               }`}
             >
               Profile

@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useUser } from '@/lib/UserContext';
 import { useRouter } from 'next/navigation';
 
@@ -13,6 +13,10 @@ export default function UsersPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const { setUser } = useUser();
   const router = useRouter();
+  
+  // Refs for auto-scroll functionality
+  const scrollContainerRef = useRef(null);
+  const newUserRef = useRef(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -42,6 +46,17 @@ export default function UsersPage() {
       setUsers((prev) => [...prev, data]);
       setNewUsername('');
       console.log('[✅ USER CREATED]', data);
+      
+      // Auto-scroll to the new user after a brief delay to ensure DOM update
+      setTimeout(() => {
+        if (scrollContainerRef.current && newUserRef.current) {
+          newUserRef.current.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest',
+            inline: 'nearest'
+          });
+        }
+      }, 100);
     } catch (err) {
       console.error('[❌ CREATE FAILED]', err);
     }
@@ -230,10 +245,11 @@ export default function UsersPage() {
         </div>
 
         {/* User Cards */}
-        <div className="flex-1 h-[900px] overflow-y-auto space-y-6 pr-2">
-          {users.map((user) => (
+        <div ref={scrollContainerRef} className="flex-1 h-[900px] overflow-y-auto space-y-6 pr-2">
+          {users.map((user, index) => (
             <div
               key={user.id}
+              ref={index === users.length - 1 ? newUserRef : null}
               onClick={() => handleUserSelect(user)}
               className="cursor-pointer w-full flex items-center justify-between bg-white hover:bg-purple-100 transition-all duration-500 ease-out border border-gray-300 rounded-xl shadow p-6 relative"
             >
