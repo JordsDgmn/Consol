@@ -1,0 +1,9 @@
+PLACEHOLDER FOR ANALYTICS PANEL SCREENSHOT
+
+This should be replaced with the actual Analytics Panel screenshot showing:
+- Performance graph for selected note
+- Session history
+- Mastery level percentage
+- Hoverable data points
+
+Expected filename: analytics-panel.png

@@ -1,0 +1,9 @@
+PLACEHOLDER FOR STATS RADAR SCREENSHOT
+
+This should be replaced with the actual Stats Radar screenshot showing:
+- 3-way radar chart
+- Comprehension, Speed, and Mastery metrics
+- Performance visualization
+- User statistics overview
+
+Expected filename: stats-radar.png

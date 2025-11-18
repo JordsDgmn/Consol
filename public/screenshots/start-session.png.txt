@@ -1,0 +1,9 @@
+PLACEHOLDER FOR START SESSION SCREENSHOT
+
+This should be replaced with the actual Start Session screenshot showing:
+- Play button interface
+- Session settings options
+- Pre-session configuration
+- Study session initiation
+
+Expected filename: start-session.png

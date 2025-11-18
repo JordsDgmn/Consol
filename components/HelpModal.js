@@ -1,10 +1,24 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import ScreenshotSlideshow from './ScreenshotSlideshow';
 
 export default function HelpModal({ isOpen, onClose, currentPage = 'dashboard' }) {
   const [activeTab, setActiveTab] = useState('user-guide');
   const [openDropdowns, setOpenDropdowns] = useState({});
-  const [fullscreenImage, setFullscreenImage] = useState(null);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isOpen, onClose]);
 
   const toggleDropdown = (id) => {
     setOpenDropdowns(prev => ({
@@ -15,127 +29,11 @@ export default function HelpModal({ isOpen, onClose, currentPage = 'dashboard' }
 
   if (!isOpen) return null;
 
-  // Screenshot placeholders - you'll need to import these images
-  const dashboardScreenshot = '/screenshots/dashboard-overlay.png'; // Add this to your public folder
-  const profileScreenshot = '/screenshots/profile-overlay.png'; // Add this to your public folder
-
   const renderUserGuide = () => {
-    const getPageOverlay = (page) => {
-      switch (page) {
-        case 'dashboard':
-          return {
-            title: 'Dashboard Overview',
-            screenshot: dashboardScreenshot,
-            description: 'Your main workspace for creating notes and study sessions'
-          };
-        case 'profile':
-          return {
-            title: 'Profile Management',
-            screenshot: profileScreenshot,
-            description: 'Manage your account settings and view user information'
-          };
-        default:
-          return {
-            title: 'Dashboard Overview',
-            screenshot: dashboardScreenshot,
-            description: 'Your main workspace for creating notes and study sessions'
-          };
-      }
-    };
-
-    const currentOverlay = getPageOverlay(currentPage);
-    const otherPages = ['dashboard', 'profile'].filter(page => page !== currentPage);
-
     return (
-      <div className="space-y-4">
-        {/* Current Page Overlay */}
-        <div className="bg-purple-50 rounded-xl p-4 border border-purple-200">
-          <div className="flex items-center mb-3">
-            <h3 className="text-lg font-semibold text-purple-700">
-              📍 Current Page: {currentOverlay.title}
-            </h3>
-          </div>
-          <div className="bg-white rounded-lg p-2 mb-3">
-            <div className="relative group">
-              <img 
-                src={currentOverlay.screenshot} 
-                alt={`${currentOverlay.title} overlay`}
-                className="w-full h-[500px] object-cover rounded-lg bg-gray-200 cursor-pointer transition-all duration-300 group-hover:blur-sm group-hover:brightness-50"
-                onClick={() => setFullscreenImage(currentOverlay.screenshot)}
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                  e.target.nextSibling.style.display = 'flex';
-                }}
-              />
-              <div className="hidden w-full h-[500px] bg-gray-200 rounded-lg items-center justify-center text-gray-500 text-sm">
-                Screenshot placeholder for {currentOverlay.title}
-              </div>
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                <span className="bg-black bg-opacity-70 text-white px-4 py-2 rounded-lg text-sm font-medium">
-                  Click to view in fullscreen
-                </span>
-              </div>
-            </div>
-          </div>
-          <p className="text-gray-700 text-sm">{currentOverlay.description}</p>
-        </div>
-
-        {/* Other Page Overlays */}
-        <div className="space-y-3">
-          <h4 className="text-md font-semibold text-gray-700">Other Page Guides</h4>
-          {otherPages.map(page => {
-            const overlay = getPageOverlay(page);
-            return (
-              <div key={page} className="bg-gray-50 rounded-xl p-3 border border-gray-200">
-                <div className="flex items-center mb-2">
-                  <h5 className="text-sm font-semibold text-gray-600">{overlay.title}</h5>
-                </div>
-                <div className="bg-white rounded-lg p-2 mb-2">
-                  <div className="relative group">
-                    <img 
-                      src={overlay.screenshot} 
-                      alt={`${overlay.title} overlay`}
-                      className="w-full h-64 object-cover rounded-lg bg-gray-200 cursor-pointer transition-all duration-300 group-hover:blur-sm group-hover:brightness-50"
-                      onClick={() => setFullscreenImage(overlay.screenshot)}
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'flex';
-                      }}
-                    />
-                    <div className="hidden w-full h-64 bg-gray-200 rounded-lg items-center justify-center text-gray-500 text-xs">
-                      Screenshot placeholder for {overlay.title}
-                    </div>
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                      <span className="bg-black bg-opacity-70 text-white px-3 py-1 rounded-lg text-xs font-medium">
-                        Click to view in fullscreen
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <p className="text-gray-600 text-xs">{overlay.description}</p>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Fullscreen Modal */}
-        {fullscreenImage && (
-          <div className="fixed inset-0 bg-black bg-opacity-95 flex items-center justify-center z-50">
-            <div className="relative w-[95vw] h-[95vh] p-4">
-              <button
-                onClick={() => setFullscreenImage(null)}
-                className="absolute top-4 right-4 text-white text-3xl font-bold bg-black bg-opacity-60 rounded-full w-12 h-12 flex items-center justify-center hover:bg-opacity-80 transition z-10"
-              >
-                ×
-              </button>
-              <img
-                src={fullscreenImage}
-                alt="Fullscreen view"
-                className="w-full h-full object-contain rounded-lg"
-              />
-            </div>
-          </div>
-        )}
+      <div className="space-y-6">
+        {/* Interactive Slideshow */}
+        <ScreenshotSlideshow />
       </div>
     );
   };
@@ -164,6 +62,29 @@ export default function HelpModal({ isOpen, onClose, currentPage = 'dashboard' }
         )}
       </div>
     );
+
+    const generalTipsContent = [
+      {
+        question: "Understanding tooltips and interface help",
+        answer: "Hover over any button, icon, or interface element to see helpful tooltips. These provide instant context about what each feature does without opening help menus."
+      },
+      {
+        question: "Making the most of study sessions",
+        answer: "Don't worry about matching exact word count - focus on capturing the main concepts and ideas. The system measures semantic similarity, not word-for-word accuracy."
+      },
+      {
+        question: "Interpreting difficulty estimates",
+        answer: "The WPM-based difficulty ratings (Easy, Moderate, Hard, Very Hard) are estimates to help you set realistic expectations. They show what speed would theoretically be needed for complete recall, but you should focus on understanding rather than speed."
+      },
+      {
+        question: "Using session modes effectively",
+        answer: "'Session Only' shows just your retry attempts for focused improvement tracking. 'All Sessions' displays your complete history for broader progress analysis. Switch between modes based on what insights you need."
+      },
+      {
+        question: "Maximizing your learning",
+        answer: "Regular practice with shorter, focused sessions is more effective than occasional long sessions. Use the calendar to maintain consistency and track your daily progress streaks."
+      }
+    ];
 
     const gettingStartedContent = [
       {
@@ -195,7 +116,7 @@ export default function HelpModal({ isOpen, onClose, currentPage = 'dashboard' }
       },
       {
         question: "Calendar navigation",
-        answer: "The calendar view shows your daily study activity with star ratings based on average similarity for that day. Use arrow buttons to navigate months and track your consistency streaks."
+        answer: "The calendar view shows your daily study activity with star ratings based on the highest score achieved on that particular day. Use arrow buttons to navigate months and track your consistency streaks."
       },
       {
         question: "Performance comparisons",
@@ -206,11 +127,11 @@ export default function HelpModal({ isOpen, onClose, currentPage = 'dashboard' }
     const studyTechniquesContent = [
       {
         question: "Active recall best practices",
-        answer: "Cover the original text and try to recall the content from memory. Write or speak your recall before checking the source. Focus on understanding concepts rather than memorizing exact phrases."
+        answer: "Cover the original text and try to recall the content from memory. Write or study your recall before checking the source. Focus on understanding concepts rather than memorizing exact phrases."
       },
       {
         question: "Using time limits effectively",
-        answer: "Set appropriate time limits based on content length. The system calculates difficulty: Easy (≤25 WPM), Moderate (25-40 WPM), Hard (40-60 WPM), Very Hard (>60 WPM). Start with longer limits and gradually decrease."
+        answer: "The system estimates difficulty based on note length and time available. For longer notes with short time limits, the required WPM (words per minute) becomes unrealistically high. The WPM calculation is just an estimate based on note word count - you don't need to match it exactly. It simply shows how much speed would theoretically be needed for word-for-word recall, helping you set realistic time expectations."
       },
       {
         question: "Time management strategies",
@@ -246,6 +167,9 @@ export default function HelpModal({ isOpen, onClose, currentPage = 'dashboard' }
         <div className="text-center text-gray-600 mb-8">
           <p className="text-lg">Learn how to use Consol effectively</p>
           <p className="text-sm mt-2">Comprehensive guides and frequently asked questions</p>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
+            <p className="text-sm text-blue-700 font-medium">💡 Pro Tip: Hover over any element in the app for helpful tooltips and explanations!</p>
+          </div>
         </div>
 
         {/* Stacked Sections with Dropdowns */}
@@ -257,6 +181,15 @@ export default function HelpModal({ isOpen, onClose, currentPage = 'dashboard' }
             bgColor="bg-purple-50"
             borderColor="border-purple-200"
             textColor="text-purple-700"
+          />
+
+          <DropdownItem
+            id="general-tips"
+            title="🎯 General Tips"
+            content={generalTipsContent}
+            bgColor="bg-teal-50"
+            borderColor="border-teal-200"
+            textColor="text-teal-700"
           />
 
           <DropdownItem
@@ -398,10 +331,7 @@ export default function HelpModal({ isOpen, onClose, currentPage = 'dashboard' }
 
         {/* Footer */}
         <div className="px-4 py-3 bg-gray-50 border-t border-gray-200">
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-gray-500">
-              Need more help? Contact support or check our documentation.
-            </p>
+          <div className="flex items-center justify-end">
             <button
               onClick={onClose}
               className="px-3 py-1 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm"

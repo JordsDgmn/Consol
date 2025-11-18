@@ -1,0 +1,9 @@
+PLACEHOLDER FOR STAT COMPARISON SCREENSHOT
+
+This should be replaced with the actual Stat Comparison screenshot showing:
+- Current vs previous stats comparison
+- Note-specific or date-specific comparisons
+- Performance metrics comparison
+- Improvement tracking
+
+Expected filename: stat-comparison.png

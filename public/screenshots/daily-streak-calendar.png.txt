@@ -1,0 +1,9 @@
+PLACEHOLDER FOR DAILY STREAK CALENDAR SCREENSHOT
+
+This should be replaced with the actual Daily Streak Calendar screenshot showing:
+- Calendar view with daily streaks
+- Star scores for consecutive days
+- Consistency tracking
+- Highest daily scores displayed
+
+Expected filename: daily-streak-calendar.png

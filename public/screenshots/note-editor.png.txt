@@ -1,0 +1,9 @@
+PLACEHOLDER FOR NOTE EDITOR SCREENSHOT
+
+This should be replaced with the actual Note Editor screenshot showing:
+- File upload area
+- Manual text input area
+- Play button to start session
+- Note editing interface
+
+Expected filename: note-editor.png

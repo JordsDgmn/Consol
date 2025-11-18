@@ -1,0 +1,9 @@
+PLACEHOLDER FOR NOTES LIST SCREENSHOT
+
+This should be replaced with the actual Notes List screenshot showing:
+- The sidebar with notes list
+- Add note (+) button
+- Delete button on hover
+- View mode toggle options
+
+Expected filename: notes-list.png

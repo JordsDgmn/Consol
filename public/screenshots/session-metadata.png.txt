@@ -1,0 +1,9 @@
+PLACEHOLDER FOR SESSION METADATA SCREENSHOT
+
+This should be replaced with the actual Session Metadata screenshot showing:
+- Session performance details
+- 'Session only' vs 'All sessions' toggle
+- Yellow dot highlighting for retry sessions
+- Hoverable score points
+
+Expected filename: session-metadata.png
