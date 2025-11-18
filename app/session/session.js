@@ -573,7 +573,7 @@ export default function SessionPage() {
                 }}
                 onContextMenu={(e) => e.preventDefault()}
                 onDragStart={(e) => e.preventDefault()}
-                onSelectStart={(e) => e.preventDefault()}
+                onSelect={(e) => e.preventDefault()}
                 onCopy={(e) => e.preventDefault()}
                 onCut={(e) => e.preventDefault()}
               >
