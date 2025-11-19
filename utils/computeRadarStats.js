@@ -15,7 +15,7 @@ export function computeRadarStats(sessions, originalWordCount = 100) {
 
   const avgNoteLength = originalWordCount || 100;
   const avgCoverageRatio = Math.min(totalWords / (avgNoteLength * sessions.length), 1);
-  const normalizedSpeed = Math.min((rawWPM * avgCoverageRatio) / 3, 1); // capped then normalized
+  const normalizedSpeed = Math.min((rawWPM * avgCoverageRatio) / 15, 1); // capped then normalized
 
   // 3. Mastery (consistency of 3-star finishes)
   const threeStarCount = sessions.filter((s) => s.stars === 3).length;

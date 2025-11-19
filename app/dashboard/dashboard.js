@@ -769,13 +769,29 @@ export default function Dashboard() {
       {/* LEFT SIDEBAR */}
       <aside className="w-[320px] border-r border-[#D9D9D9] flex flex-col px-4 pt-4 overflow-hidden z-10">
 
-        <button
-          onClick={handleCreateNote}
-          className="w-full bg-white text-[#A229FF] border border-[#E0E0E0] rounded-full py-1 text-lg mb-4 hover:bg-[#A229FF] hover:outline hover:outline-2 hover:outline-green-300 hover:text-white hover:border-green-300 active:scale-95 transition"
-          title="Create New Note"
-        >
-          +
-        </button>
+        <div className="group cursor-pointer mb-4" onClick={handleCreateNote}>
+          {/* Morphing Add Note Button Container */}
+          <div className="relative transition-all duration-500 ease-out transform group-hover:scale-105 overflow-hidden rounded-full group-hover:rounded-full">
+            {/* Base Button that expands */}
+            <button
+              className="w-full h-[40px] bg-white text-[#A229FF] border border-[#E0E0E0] rounded-full text-lg hover:bg-[#A229FF] hover:outline hover:outline-2 hover:outline-green-300 hover:text-white hover:border-green-300 active:scale-95 transition-all duration-500 ease-out group-hover:w-full shadow-[0_2px_6px_rgba(162,41,255,0.15)] group-hover:shadow-[0_4px_12px_rgba(162,41,255,0.1)] overflow-hidden flex items-center justify-center"
+              title="Create New Note"
+            >
+              {/* Plus Symbol - disappears instantly on hover, reappears slowly after text is gone */}
+              <div className="absolute text-2xl font-bold transition-all duration-[50ms] group-hover:duration-[50ms] group-hover:opacity-0 group-hover:scale-75 opacity-100 delay-0 group-hover:delay-0 [transition-delay:800ms] [transition-duration:700ms] z-10">
+                +
+              </div>
+              
+              {/* Text Content - starts hidden, fades and slides in */}
+              <div className="absolute flex items-center justify-center h-full w-full transform -translate-x-[120px] opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-500 ease-out delay-150">
+                <span className="text-[#A229FF] group-hover:text-white font-bold text-base whitespace-nowrap flex items-center px-4">
+                  <span className="mr-2">+</span>
+                  <span>Create New Note</span>
+                </span>
+              </div>
+            </button>
+          </div>
+        </div>
 
         {/* Toggles */}
         <div className="flex justify-start gap-2 mb-2 text-[#6B6767] text-xl">
@@ -897,25 +913,32 @@ export default function Dashboard() {
         {/* CENTER NOTE BLOCK */}
       <main className="relative flex-1 flex justify-center items-start px-4 py-10 overflow-hidden ">
         {/* PLAY BUTTON */}
-        <div
-          onClick={() => {
-            if (!selectedNoteId) return;
-            setShowModal(true);
-          }}
-          className={`absolute top-[0px] left-[230px] z-20 w-[76px] h-[76px] rounded-full border-[4px] flex items-center justify-center transition shadow-[0_4px_10px_rgba(0,0,0,0.25)]
-            ${selectedNoteId
-              ? 'bg-[#E9E9E9] border-[#A229FF] cursor-pointer hover:scale-105 '
-              : 'bg-gray-200 border-gray-400 cursor-not-allowed opacity-50'}
-          `}
-        >
+        {selectedNoteId && (
           <div
-            className={`w-0 h-0 border-t-[16px] border-b-[16px] ml-1
-              ${selectedNoteId
-                ? 'border-l-[28px] border-l-[#A229FF] border-t-transparent border-b-transparent'
-                : 'border-l-[28px] border-l-gray-500 border-t-transparent border-b-transparent'}
-            `}
-          />
-        </div>
+            onClick={() => {
+              if (!selectedNoteId) return;
+              setShowModal(true);
+            }}
+            className="absolute top-[0px] left-[230px] z-20 group cursor-pointer"
+          >
+            {/* Morphing Button Container with Overflow Hidden for Masking */}
+            <div className="relative transition-all duration-500 ease-out transform group-hover:scale-105 overflow-hidden rounded-full group-hover:rounded-full">
+              {/* Base Circle that expands */}
+              <div className="w-[76px] h-[76px] rounded-full border-[4px] bg-[#E9E9E9] border-[#A229FF] flex items-center justify-center transition-all duration-500 ease-out group-hover:w-[200px] shadow-[0_4px_10px_rgba(162,41,255,0.25)] group-hover:shadow-[0_8px_25px_rgba(162,41,255,0.15)] overflow-hidden">
+                
+                {/* Play Triangle - stays in place but shrinks */}
+                <div className="absolute left-[26px] w-0 h-0 border-t-[16px] border-b-[16px] border-l-[28px] border-l-[#A229FF] border-t-transparent border-b-transparent transition-all duration-500 ease-out group-hover:scale-75 z-10" />
+                
+                {/* Text Content - starts hidden with fade and slide animation */}
+                <div className="absolute flex items-center justify-start h-full w-full transform -translate-x-[120px] opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-500 ease-out delay-150">
+                  <span className="text-[#A229FF] font-bold text-lg whitespace-nowrap flex items-center pl-[60px] pr-4">
+                    <span>Start Session</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
 
         {/* White Center Card */}
@@ -938,13 +961,16 @@ export default function Dashboard() {
                     {saveStatus && (
                       <p className="text-green-500 text-sm">{saveStatus}</p>
                     )}
-                    <button
-                      onClick={handleSave}
-                      className="text-xs px-3 py-1 rounded-full bg-[#C170FF] text-white shadow hover:brightness-110"
-                      title="Save Note (Ctrl+S)"
-                    >
-                      Save
-                    </button>
+                    {/* Only show Save button if there are changes */}
+                    {(localTitle !== (selectedNote?.title || '') || localContent !== (selectedNote?.content || '')) && (
+                      <button
+                        onClick={handleSave}
+                        className="text-xs px-3 py-1 rounded-full bg-[#C170FF] text-white shadow hover:brightness-110 transition-all duration-200"
+                        title="Save Note (Ctrl+S)"
+                      >
+                        Save
+                      </button>
+                    )}
                   </div>
                 </div>
 

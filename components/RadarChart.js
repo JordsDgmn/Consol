@@ -109,6 +109,34 @@ export default function RadarChart({ dataValues = [0, 0, 0], compareValues = nul
   return (
     <div className="relative w-[400px] h-[400px] p-4">
       <canvas ref={canvasRef}></canvas>
+      
+      {/* Invisible tooltip overlays positioned over chart labels */}
+      {/* Comprehension - top */}
+      <div className="absolute top-14 left-1/2 transform -translate-x-1/2 w-32 h-12 group cursor-help">
+        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block w-max max-w-xs bg-gray-800 text-white text-xs rounded px-3 py-2 shadow-lg z-20">
+          <div className="font-semibold mb-1">Comprehension (All-Time)</div>
+          <div>Your average semantic similarity score across all sessions ever completed.</div>
+          <div className="text-gray-300 text-xs mt-1">Formula: (sum of all similarity scores ÷ total sessions) × 100</div>
+        </div>
+      </div>
+      
+      {/* Speed - bottom right */}
+      <div className="absolute bottom-16 right-8 w-32 h-12 group cursor-help">
+        <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block w-max max-w-xs bg-gray-800 text-white text-xs rounded px-3 py-2 shadow-lg z-20">
+          <div className="font-semibold mb-1">Speed (All-Time)</div>
+          <div>Your typing speed adjusted for how much of the note you recalled. Completeness = words typed ÷ original note length.</div>
+          <div className="text-gray-300 text-xs mt-1">Formula: WPM × completeness, scaled to 0-100 (÷15 normalizes ~15 WPM = 100%)</div>
+        </div>
+      </div>
+      
+      {/* Mastery - bottom left */}
+      <div className="absolute bottom-16 left-8 w-32 h-12 group cursor-help">
+        <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block w-max max-w-xs bg-gray-800 text-white text-xs rounded px-3 py-2 shadow-lg z-20">
+          <div className="font-semibold mb-1">Mastery (All-Time)</div>
+          <div>Percentage of all your sessions that achieved 3-star performance (81%+ similarity).</div>
+          <div className="text-gray-300 text-xs mt-1">Formula: (sessions with 3 stars ÷ total sessions) × 100</div>
+        </div>
+      </div>
 
       {/* Floating comparison table */}
       {compareValues && (

@@ -50,7 +50,7 @@ export function computeRadarStats({ session, allSessionsForUser = [], originalNo
   const baseSpeed = word_count / duration_secs || 0;
   const completenessRatio = word_count / originalNoteWordCount || 0;
   const adjustedSpeed = baseSpeed * completenessRatio;
-  const normalizedSpeed = Math.min((adjustedSpeed / 5) * 100, 100); // capped
+  const normalizedSpeed = Math.min((adjustedSpeed / 15) * 100, 100); // capped
 
   // ---- COMPREHENSION ----
   const normalizedComprehension = (similarity || 0) * 100;
