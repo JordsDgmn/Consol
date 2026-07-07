@@ -5,6 +5,9 @@
 		},
 		{
 			"path": "../simcse-api"
+		},
+		{
+			"path": "../Downloads/Thesis/FinalPaper_Latex/mermaid_diagrams"
 		}
 	],
 	"settings": {}

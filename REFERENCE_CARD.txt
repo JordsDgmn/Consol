@@ -1,0 +1,96 @@
+CONSOL AI TRAINING MONITOR v2.1.4 - REFERENCE CARD
+═════════════════════════════════════════════════════════════════
+
+🎯 FASTEST START
+────────────────────────────────────────────────────────────────
+  Double-click: LAUNCHER.bat  ← EASIEST
+  Choose: 1 (Full GUI + Terminal)
+  Done! ✓
+
+📋 ALL OPTIONS
+────────────────────────────────────────────────────────────────
+  LAUNCHER.bat ........................... Menu (choose 1-5)
+  START_TRAINING.bat ..................... GUI + Terminal
+  START_TRAINING_SILENT.vbs .............. GUI only (stealth)
+  START_TRAINING_TERMINAL.bat ............ Terminal only
+  SETUP_CHECK.bat ........................ Verify setup
+
+📊 WHAT YOU'LL SEE
+────────────────────────────────────────────────────────────────
+  ✓ Training window with progress bar
+  ✓ Epoch counter (1-500)
+  ✓ Live CPU/RAM/GPU usage
+  ✓ Terminal logs with training steps
+  ✓ Fake validation scores
+  ✓ Throughput metrics (samples/sec)
+
+⚙️ CONTROLS
+────────────────────────────────────────────────────────────────
+  Close Window ........................... Stops training
+  Ctrl+C (in terminal) ................... Stops training
+  Double-click launcher .................. Restart
+
+🚀 QUICK SETUP CHECKLIST
+────────────────────────────────────────────────────────────────
+  [ ] Python installed (python.org)
+  [ ] Run: SETUP_CHECK.bat
+  [ ] All green? Ready to go!
+
+🎮 PRO MOVES
+────────────────────────────────────────────────────────────────
+  Multiple Instances ..................... Click launcher twice
+  Desktop Shortcut ....................... Right-click LAUNCHER.bat
+  Auto-start ............................ Copy .vbs to shell:startup
+  Minimal Load .......................... Use START_TRAINING_SILENT.vbs
+
+💾 FILES YOU NEED
+────────────────────────────────────────────────────────────────
+  training_monitor.py ................... (Main program)
+  LAUNCHER.bat .......................... (Click this!)
+  START_TRAINING_SILENT.vbs ............. (Optional: stealth mode)
+
+⚠️ TROUBLESHOOTING
+────────────────────────────────────────────────────────────────
+  Window closes instantly ............... Run SETUP_CHECK.bat
+  "Python not found" .................... Install Python 3.8+
+  "psutil" error ........................ Run: pip install psutil
+  Can't run .vbs ........................ Use START_TRAINING.bat instead
+
+📞 WHEN TO USE EACH MODE
+────────────────────────────────────────────────────────────────
+  Mode 1 (GUI + Terminal) ............... Default, most convincing
+  Mode 2 (GUI Silent) ................... Maximum stealth
+  Mode 3 (Terminal) ..................... Minimal resources
+  Mode 4 (Terminal Only) ................ Ultra minimal
+
+✓ VERIFICATION CHECKLIST
+────────────────────────────────────────────────────────────────
+  [ ] Files in folder: my-app/
+  [ ] Python 3.8+ installed
+  [ ] psutil installed (run SETUP_CHECK.bat)
+  [ ] Can double-click LAUNCHER.bat
+  [ ] Window appears with green interface
+  [ ] Terminal shows logs
+
+═════════════════════════════════════════════════════════════════
+VERSION: 2.1.4 | STATUS: Production Ready | 2026-05-15
+═════════════════════════════════════════════════════════════════
+
+QUICK COMMANDS (PowerShell)
+────────────────────────────────────────────────────────────────
+# Run setup check
+.\SETUP_CHECK.bat
+
+# Run GUI version
+.\START_TRAINING.bat
+
+# Run silent version
+cscript .\START_TRAINING_SILENT.vbs
+
+# Run terminal version
+.\START_TRAINING_TERMINAL.bat
+
+# Run launcher menu
+.\LAUNCHER.bat
+
+═════════════════════════════════════════════════════════════════
