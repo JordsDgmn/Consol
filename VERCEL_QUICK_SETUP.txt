@@ -1,0 +1,51 @@
+# Quick Copy-Paste for Vercel Environment Variables
+
+## Ready Now (Copy These)
+
+```
+NODE_ENV = production
+NEXTAUTH_SECRET = peBmtT/9PWwOnOof2vUw4JV86v28t/HEvpt2QNmAlYU=
+CLOUDINARY_CLOUD_NAME = dmed8jwoe
+CLOUDINARY_API_KEY = 949245388128451
+CLOUDINARY_API_SECRET = OBqbghUa2hi8kxDg6eglk2Z5fkk
+```
+
+## Critical: Get From Neon (Required to Deploy)
+
+```
+DATABASE_URL = [PASTE YOUR NEON CONNECTION STRING HERE]
+```
+
+**How to get DATABASE_URL:**
+1. Go to https://neon.tech/
+2. Sign up with GitHub (takes 1 min)
+3. Create a project
+4. Copy the "Connection string - psql" 
+5. Paste it above
+
+**Example what it looks like:**
+```
+postgresql://neondb_owner:abcd1234@ep-xyz-region.neon.tech/neondb?sslmode=require
+```
+
+## After First Deploy (Fill In Later)
+
+```
+NEXT_PUBLIC_API_URL = https://[YOUR_VERCEL_DOMAIN_HERE]/api
+NEXTAUTH_URL = https://[YOUR_VERCEL_DOMAIN_HERE]
+```
+
+Example domains Vercel might give you:
+- `consol-geo.vercel.app`
+- `consol-flax.vercel.app`
+- `consol-sandy.vercel.app`
+
+---
+
+## Timeline
+
+- **Right now:** Get DATABASE_URL from Neon (5 min)
+- **Then:** Add variables to Vercel & deploy (2 min)
+- **After deploy:** Update domain-based variables (1 min)
+- **Total:** ~10 minutes
+

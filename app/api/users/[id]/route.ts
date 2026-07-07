@@ -2,12 +2,13 @@
 import { pool } from '@/lib/db';
 import type { NextRequest } from 'next/server';
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const { username } = await req.json();
     const result = await pool.query(
       'UPDATE users SET username = $1 WHERE id = $2 RETURNING *',
-      [username, params.id]
+      [username, id]
     );
     return new Response(JSON.stringify(result.rows[0]), { status: 200 });
   } catch (err) {
@@ -18,10 +19,11 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
 export async function DELETE(
   req: NextRequest, 
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const userId = params?.id;
+    const { id } = await params;
+    const userId = id;
 
     console.log('🗑️ DELETE request received for user ID:', userId);
     console.log('🗑️ Params object:', params);

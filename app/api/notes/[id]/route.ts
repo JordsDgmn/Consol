@@ -4,10 +4,10 @@ import { pool } from '../../../../lib/db';
 // GET /api/notes/[id]
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const noteId = params.id;
+    const { id: noteId } = await params;
     const userId = req.nextUrl.searchParams.get('userId');
 
     if (!noteId || !userId) {
@@ -38,9 +38,9 @@ export async function GET(
 // DELETE /api/notes/[id]
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const noteId = params.id;
+  const { id: noteId } = await params;
 
   try {
     const result = await pool.query(

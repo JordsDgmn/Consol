@@ -405,7 +405,7 @@ export default function UsersPage() {
             {/* Warning Message */}
             <div className="mb-6">
               <p className="text-gray-700 mb-2">
-                Are you sure you want to delete <strong>"{deletingUser?.username || 'Unknown User'}"</strong>?
+                Are you sure you want to delete <strong>&quot;{deletingUser?.username || 'Unknown User'}&quot;</strong>?
               </p>
               <p className="text-sm text-red-600 bg-red-50 p-3 rounded border-l-4 border-red-400">
                 ⚠️ This action cannot be undone. All notes and session data for this user will be permanently deleted.

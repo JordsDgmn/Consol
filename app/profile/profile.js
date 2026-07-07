@@ -373,7 +373,7 @@ export default function ProfilePage() {
                   <p className="text-gray-500 relative group">
                     Highest Daily Streak
                     <span className="absolute left-0 top-full mt-1 hidden group-hover:block w-max bg-gray-800 text-white text-xs rounded px-2 py-1 shadow z-10">
-                      Longest daily streak you've ever achieved.<br/>
+                      Longest daily streak you&apos;ve ever achieved.<br/>
                       <span className="opacity-50">(All-time highest streak)</span>
                     </span>
                   </p>
