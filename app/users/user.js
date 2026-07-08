@@ -22,11 +22,17 @@ export default function UsersPage() {
     const fetchUsers = async () => {
       try {
         const res = await fetch('/api/users');
+        if (!res.ok) {
+          console.error('[❌ USERS FETCH FAILED]', res.status);
+          setUsers([]);
+          return;
+        }
         const data = await res.json();
-        setUsers(data);
+        setUsers(Array.isArray(data) ? data : []);
         console.log('[✅ USERS FETCHED]', data);
       } catch (err) {
         console.error('[❌ USERS FETCH FAILED]', err);
+        setUsers([]);
       }
     };
 
@@ -42,6 +48,11 @@ export default function UsersPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: newUsername }),
       });
+      if (!res.ok) {
+        console.error('[❌ CREATE FAILED]', res.status);
+        alert('Failed to create user');
+        return;
+      }
       const data = await res.json();
       setUsers((prev) => [...prev, data]);
       setNewUsername('');
