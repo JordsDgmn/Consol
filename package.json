@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.1.0",
     "@prisma/client": "^6.7.0",
     "@tanstack/react-table": "^8.21.3",
     "ag-grid-community": "^33.3.2",
