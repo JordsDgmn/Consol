@@ -22,11 +22,15 @@ export async function GET() {
       ORDER BY u.id ASC
     `);
 
-    return new Response(JSON.stringify(result.rows), { status: 200 });
+    return new Response(JSON.stringify(result.rows), { 
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
   } catch (err) {
     console.error('GET /users error:', err);
-    return new Response(JSON.stringify({ error: 'Failed to fetch users' }), {
+    return new Response(JSON.stringify({ error: 'Failed to fetch users', details: String(err) }), {
       status: 500,
+      headers: { 'Content-Type': 'application/json' }
     });
   }
 }
@@ -38,11 +42,15 @@ export async function POST(req: NextRequest) {
       'INSERT INTO users (username) VALUES ($1) RETURNING *',
       [username]
     );
-    return new Response(JSON.stringify(result.rows[0]), { status: 201 });
+    return new Response(JSON.stringify(result.rows[0]), { 
+      status: 201,
+      headers: { 'Content-Type': 'application/json' }
+    });
   } catch (err) {
     console.error('POST /users error:', err);
-    return new Response(JSON.stringify({ error: 'Failed to create user' }), {
+    return new Response(JSON.stringify({ error: 'Failed to create user', details: String(err) }), {
       status: 500,
+      headers: { 'Content-Type': 'application/json' }
     });
   }
 }
