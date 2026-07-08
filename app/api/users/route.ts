@@ -4,6 +4,9 @@ import type { NextRequest } from 'next/server';
 
 export async function GET() {
   try {
+    console.log('[API] GET /users - Starting query');
+    console.log('[API] DATABASE_URL:', process.env.DATABASE_URL ? 'SET' : 'NOT SET');
+    
     const result = await pool.query(`
       SELECT 
         u.id,
@@ -22,13 +25,19 @@ export async function GET() {
       ORDER BY u.id ASC
     `);
 
+    console.log('[API] GET /users - Query successful, rows:', result.rows?.length || 0);
+    
     return new Response(JSON.stringify(result.rows), { 
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (err) {
-    console.error('GET /users error:', err);
-    return new Response(JSON.stringify({ error: 'Failed to fetch users', details: String(err) }), {
+    console.error('[API] GET /users - Error:', err?.message || err);
+    console.error('[API] Error details:', err);
+    return new Response(JSON.stringify({ 
+      error: 'Failed to fetch users', 
+      details: String(err?.message || err) 
+    }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });
