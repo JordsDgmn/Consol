@@ -164,8 +164,10 @@ export default function SessionPage() {
     try {
       const simcseUrl = process.env.NEXT_PUBLIC_SIMCSE_API_URL || 'http://localhost:5000/score';
       let result = { similarity: 0 };
+      let usedFallback = false;
       
       try {
+        console.log('[🔄 Attempting to fetch score from]', simcseUrl);
         const res = await fetch(simcseUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -173,30 +175,47 @@ export default function SessionPage() {
             text1: initialNote.content,
             text2: text,
           }),
+          timeout: 5000,
         });
 
-        result = await res.json();
-        console.log('[✅ Score received]', result);
+        if (!res.ok) {
+          throw new Error(`API returned ${res.status}: ${res.statusText}`);
+        }
+
+        const responseData = await res.json();
+        
+        if (typeof responseData.similarity === 'number') {
+          result = responseData;
+          console.log('[✅ Score received from API]', result);
+        } else {
+          throw new Error('Invalid response format from API');
+        }
       } catch (scoreErr) {
-        console.warn('[⚠️ SimCSE scoring unavailable, using basic calculation]', scoreErr);
-        // Fallback: calculate basic similarity (word overlap)
-        const words1 = initialNote.content.toLowerCase().split(/\s+/);
-        const words2 = text.toLowerCase().split(/\s+/);
+        console.warn('[⚠️ SimCSE API unavailable, using fallback similarity calculation]', scoreErr.message);
+        usedFallback = true;
+        
+        // Fallback: calculate Jaccard similarity (word overlap)
+        const words1 = initialNote.content.toLowerCase().split(/\s+/).filter(w => w.length > 0);
+        const words2 = text.toLowerCase().split(/\s+/).filter(w => w.length > 0);
         const set1 = new Set(words1);
         const set2 = new Set(words2);
         const intersection = [...set1].filter(w => set2.has(w)).length;
-        const union = new Set([...set1, ...set2]).size;
+        const union = new Set([...words1, ...words2]).size;
         result.similarity = union > 0 ? intersection / union : 0;
-        console.log('[📊 Basic similarity calculated]', result.similarity);
+        console.log('[📊 Fallback similarity calculated]', result.similarity);
       }
 
-      if (typeof result.similarity !== 'number') {
-        if (text.trim() === '') result.similarity = 0.0;
-        else {
-          console.warn('Invalid score from backend, using basic calculation');
+      if (typeof result.similarity !== 'number' || isNaN(result.similarity)) {
+        if (text.trim() === '') {
+          result.similarity = 0.0;
+        } else {
           result.similarity = 0.5;
         }
+        console.log('[⚠️ Normalized similarity]', result.similarity);
       }
+
+      // Log which method was used
+      console.log(`[📋 Score Status] ${usedFallback ? 'Fallback' : 'API'} method used. Similarity: ${result.similarity}`);
 
       setScore(result.similarity);
 

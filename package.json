@@ -20,6 +20,7 @@
     "multer": "^2.0.2",
     "next": "^16.2.10",
     "pg": "^8.15.6",
+    "pg-connection-string": "^2.14.0",
     "postgres": "^3.4.9",
     "prisma": "^6.7.0",
     "react": "^19.0.0",
