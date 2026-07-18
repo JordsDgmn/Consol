@@ -33,7 +33,9 @@ export default function FinishModal({
         ? sessionData.sessionOnly
         : sessionData.allSessions;
 
-    const newChartData = activeGroup.map((s, i) => ({
+    // Reverse to show chronological order (oldest first, newest last)
+    // API returns DESC order (newest first), so we reverse to ASC
+    const newChartData = [...activeGroup].reverse().map((s, i) => ({
       id: s.id,
       similarity: Number(s.similarity),
       trial: i + 1,
