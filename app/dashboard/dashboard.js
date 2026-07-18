@@ -288,24 +288,28 @@ export default function Dashboard() {
     formData.append("file", file);
 
     try {
-      const res = await fetch("http://127.0.0.1:5000/upload-file", {
+      const res = await fetch("/api/upload-file", {
         method: "POST",
         body: formData,
       });
 
-      if (!res.ok) throw new Error("Upload failed");
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData?.error || "Upload failed");
+      }
 
       const data = await res.json();
 
       if (data?.text) {
         setLocalContent(data.text);
-        console.log("✅ Uploaded file converted to text:", data.text);
+        console.log("✅ Uploaded file converted to text:", data.fileName);
+        console.log(`   Cleaned ${data.cleanedLength} characters from ${data.rawLength} original`);
       } else {
         alert(data?.error || "Upload failed.");
       }
     } catch (error) {
       console.error("❌ File upload error:", error);
-      alert("Upload failed. Make sure the backend server is running.");
+      alert(`Upload failed: ${error.message}`);
     }
   };
 
