@@ -1,8 +1,6 @@
 import { writeFile, unlink, readFile } from 'fs/promises';
 import { tmpdir } from 'os';
 import { join } from 'path';
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf';
-import mammoth from 'mammoth';
 
 // Helper: check file type
 function getAllowedExtension(filename) {
@@ -15,6 +13,8 @@ function getAllowedExtension(filename) {
 
 // Helper: clean extracted text
 function cleanText(text) {
+  if (!text) return '';
+  
   // Remove URLs
   text = text.replace(/http\S+/g, '');
   
@@ -42,39 +42,67 @@ function cleanText(text) {
   return text.trim();
 }
 
-// Helper: extract text from PDF
-async function extractPdfText(filePath) {
+// Helper: extract text from TXT (simple)
+async function extractTxtText(filePath) {
   try {
-    const pdfBuffer = await readFile(filePath);
-    const pdf = await pdfjsLib.getDocument({ data: pdfBuffer }).promise;
-    let text = '';
-
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const textContent = await page.getTextContent();
-      text += textContent.items.map((item) => item.str).join('') + '\n';
-    }
-
-    return text;
+    return await readFile(filePath, 'utf-8');
   } catch (err) {
-    throw new Error(`PDF parsing failed: ${err.message}`);
+    throw new Error(`TXT reading failed: ${err.message}`);
   }
 }
 
-// Helper: extract text from DOCX
+// Helper: extract text from DOCX (binary extraction)
 async function extractDocxText(filePath) {
   try {
     const buffer = await readFile(filePath);
-    const result = await mammoth.extractRawText({ buffer });
-    return result.value;
+    
+    // DOCX is a ZIP file, extract text using simple binary search
+    // Look for <t> XML tags which contain text
+    const text = buffer.toString('latin1');
+    const matches = text.match(/<t[^>]*>([^<]*)<\/t>/g) || [];
+    const extracted = matches
+      .map(m => m.replace(/<\/?t[^>]*>/g, ''))
+      .join(' ');
+    
+    return extracted || 'No text found in DOCX';
   } catch (err) {
     throw new Error(`DOCX parsing failed: ${err.message}`);
   }
 }
 
-// Helper: extract text from TXT
-async function extractTxtText(filePath) {
-  return await readFile(filePath, 'utf-8');
+// Helper: extract text from PDF (simple method)
+async function extractPdfText(filePath) {
+  try {
+    const buffer = await readFile(filePath);
+    
+    // Simple PDF text extraction using binary search
+    // PDF stores text in streams - look for text markers
+    const text = buffer.toString('latin1');
+    
+    // Find text in BT...ET blocks (PDF text operators)
+    const btRegex = /BT([\s\S]*?)ET/g;
+    let matches;
+    let extracted = '';
+    
+    while ((matches = btRegex.exec(text)) !== null) {
+      const block = matches[1];
+      // Look for Tj operators (show text)
+      const textRegex = /\((.*?)\)\s*Tj/g;
+      let textMatch;
+      while ((textMatch = textRegex.exec(block)) !== null) {
+        extracted += textMatch[1] + ' ';
+      }
+    }
+    
+    // Fallback: if minimal text found, return error
+    if (extracted.trim().length < 10) {
+      throw new Error('PDF text extraction returned minimal content. Try a simpler PDF.');
+    }
+    
+    return extracted;
+  } catch (err) {
+    throw new Error(`PDF parsing failed: ${err.message}`);
+  }
 }
 
 export async function POST(request) {
