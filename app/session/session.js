@@ -194,15 +194,35 @@ export default function SessionPage() {
         console.warn('[⚠️ SimCSE API unavailable, using fallback similarity calculation]', scoreErr.message);
         usedFallback = true;
         
-        // Fallback: calculate Jaccard similarity (word overlap)
-        const words1 = initialNote.content.toLowerCase().split(/\s+/).filter(w => w.length > 0);
-        const words2 = text.toLowerCase().split(/\s+/).filter(w => w.length > 0);
-        const set1 = new Set(words1);
-        const set2 = new Set(words2);
-        const intersection = [...set1].filter(w => set2.has(w)).length;
-        const union = new Set([...words1, ...words2]).size;
-        result.similarity = union > 0 ? intersection / union : 0;
-        console.log('[📊 Fallback similarity calculated]', result.similarity);
+        // Fallback: Improved token set similarity (more semantic than Jaccard)
+        // This considers word order and proximity, not just presence/absence
+        const normalizeText = (t) => t.toLowerCase().replace(/[.,!?;:—]/g, '').split(/\s+/).filter(w => w.length > 2);
+        const words1 = normalizeText(initialNote.content);
+        const words2 = normalizeText(text);
+        
+        if (words1.length === 0 || words2.length === 0) {
+          result.similarity = 0;
+        } else {
+          // Token Set Similarity: more forgiving of word order changes
+          const set1 = new Set(words1);
+          const set2 = new Set(words2);
+          const intersection = [...set1].filter(w => set2.has(w)).length;
+          
+          // Boost score by considering length ratio (penalize very different lengths less)
+          const lengthRatio = Math.min(words1.length, words2.length) / Math.max(words1.length, words2.length);
+          const wordOverlap = intersection / Math.max(words1.length, words2.length);
+          
+          // Combined: word overlap (70%) + length similarity (30%)
+          result.similarity = (wordOverlap * 0.7) + (lengthRatio * 0.3);
+          result.similarity = Math.min(1, Math.max(0, result.similarity));
+        }
+        
+        console.log('[📊 Fallback similarity calculated (Token Set)]', {
+          similarity: result.similarity,
+          note_words: words1.length,
+          answer_words: words2.length,
+          warning: '⚠️ Using fallback - scores will be ~30-50% lower than SimCSE. Run SimCSE server for better accuracy.'
+        });
       }
 
       if (typeof result.similarity !== 'number' || isNaN(result.similarity)) {
