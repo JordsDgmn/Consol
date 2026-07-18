@@ -64,6 +64,32 @@ export default function SessionPage() {
 
   const textRef = useRef();
 
+  // Diagnostic: Check SimCSE server on page load
+  useEffect(() => {
+    const runDiagnostic = async () => {
+      try {
+        const res = await fetch('/api/simcse-diagnostic');
+        const diagnostic = await res.json();
+        
+        console.group('🔧 SimCSE Status Check');
+        console.log('📍 URL:', diagnostic.simcseUrl);
+        console.log('📊 Reachable:', diagnostic.reachable ? '✅ YES' : '❌ NO');
+        if (diagnostic.testScore !== null) {
+          console.log('🧪 Test Score:', diagnostic.testScore?.toFixed(4), '(expected: ~0.95+)');
+        }
+        console.log('💡 Recommendation:', diagnostic.recommendation);
+        console.log('---');
+        console.log('IF SCORES ARE LOW: Make sure SimCSE server is running!');
+        console.log('Start with: python simcse-api/run_server.py');
+        console.groupEnd();
+      } catch (err) {
+        console.warn('⚠️ Could not run diagnostic:', err.message);
+      }
+    };
+    
+    runDiagnostic();
+  }, []);
+
   // Load note from query param
   // using noteId
   useEffect(() => {
@@ -168,6 +194,11 @@ export default function SessionPage() {
       
       try {
         console.log('[🔄 Attempting to fetch score from]', simcseUrl);
+        
+        // Use AbortController for proper timeout handling
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        
         const res = await fetch(simcseUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -175,8 +206,10 @@ export default function SessionPage() {
             text1: initialNote.content,
             text2: text,
           }),
-          timeout: 5000,
+          signal: controller.signal,
         });
+        
+        clearTimeout(timeoutId);
 
         if (!res.ok) {
           throw new Error(`API returned ${res.status}: ${res.statusText}`);
@@ -263,7 +296,8 @@ export default function SessionPage() {
       });
 
       console.log('💾 Saved session:', saved);
-      setHighlightId(saved?.id || null);
+      const savedSessionId = saved?.id;
+      setHighlightId(savedSessionId || null);
 
       const response = await fetch(`/api/sessions?userId=${user.id}&noteId=${initialNote.id}`);
       const sessionData = await response.json();
@@ -295,6 +329,17 @@ export default function SessionPage() {
         console.warn('[⚠️ retryGroup IS EMPTY] Could not match saved session ID in sessionOnly groups');
         retryGroup = saved ? [saved] : [];
       }
+
+      // Debug: Log the highlight details
+      console.log('[🔆 Highlight Debug]', {
+        savedSessionId,
+        retryGroupLength: retryGroup?.length,
+        retryGroupFirstId: retryGroup?.[0]?.id,
+        retryGroupLastId: retryGroup?.[retryGroup?.length - 1]?.id,
+        allSessionGroupLength: allSessionGroup?.length,
+        firstSessionInRetryGroup: retryGroup?.[0],
+        lastSessionInRetryGroup: retryGroup?.[retryGroup?.length - 1],
+      });
 
       setSessionOnlyGroup(retryGroup);
       setAllSessionGroup(allSessionGroup);

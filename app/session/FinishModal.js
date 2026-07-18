@@ -23,6 +23,9 @@ export default function FinishModal({
       sessionOnlyLength: sessionData.sessionOnly?.length,
       allSessionsLength: sessionData.allSessions?.length,
       sessionOnlyFirst: sessionData.sessionOnly?.[0],
+      sessionOnlyLast: sessionData.sessionOnly?.[sessionData.sessionOnly?.length - 1],
+      allSessionsFirst: sessionData.allSessions?.[0],
+      allSessionsLast: sessionData.allSessions?.[sessionData.allSessions?.length - 1],
       isArray: Array.isArray(sessionData.sessionOnly)
     });
   }, [sessionData, highlightId]);
@@ -39,7 +42,15 @@ export default function FinishModal({
       id: s.id,
       similarity: Number(s.similarity),
       trial: i + 1,
+      created_at: s.created_at, // Include for tooltip date/time display
     }));
+
+    console.log('[📊 FinishModal Chart Data]', {
+      viewMode,
+      dataLength: newChartData.length,
+      firstPoint: newChartData[0],
+      lastPoint: newChartData[newChartData.length - 1],
+    });
 
     setInternalChartData(newChartData);
   }, [viewMode, sessionData]);
@@ -74,7 +85,11 @@ export default function FinishModal({
         )}
 
         <div className="w-full h-[200px] bg-white rounded-md text-center text-xs text-gray-400 mb-4">
-          <LineChart data={internalChartData} highlightId={highlightId} />
+          <LineChart 
+            data={internalChartData} 
+            highlightId={highlightId}
+            tooltipMode={viewMode === 'sessionOnly' ? 'timeOnly' : 'full'}
+          />
         </div>
 
         <div className="flex items-center justify-center gap-2 mb-4">

@@ -10,37 +10,63 @@ export async function GET(req) {
     console.log(`   Environment NODE_ENV: ${process.env.NODE_ENV}`);
 
     // Try to connect to SimCSE
+    let reachable = false;
+    let errorMessage = '';
+    let testScore = null;
+    
     try {
-      const testRes = await fetch(simcseUrl === 'http://localhost:5000/score' 
+      const healthUrl = simcseUrl === 'http://localhost:5000/score' 
         ? 'http://localhost:5000/health' 
-        : simcseUrl.replace('/score', '/health'), 
-        { 
-          method: 'GET',
-          timeout: 5000 
-        }
-      );
+        : simcseUrl.replace('/score', '/health');
       
-      console.log(`   ✅ SimCSE API reachable: ${testRes.ok}`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
       
-      return NextResponse.json({
-        simcseUrl,
-        isConfigured: !!process.env.NEXT_PUBLIC_SIMCSE_API_URL,
-        reachable: testRes.ok,
-        status: testRes.status,
-        environment: process.env.NODE_ENV,
-        message: 'Check browser console for full diagnostics'
+      const testRes = await fetch(healthUrl, { 
+        method: 'GET',
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
+      reachable = testRes.ok;
+      console.log(`   ✅ SimCSE API reachable: ${reachable}`);
+      
+      // If reachable, try a test score
+      if (reachable) {
+        try {
+          const scoreRes = await fetch(simcseUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              text1: 'The cat sat on the mat',
+              text2: 'A cat was sitting on a mat'
+            }),
+            signal: controller.signal
+          });
+          
+          if (scoreRes.ok) {
+            const scoreData = await scoreRes.json();
+            testScore = scoreData.similarity;
+            console.log(`   📊 Test score (similar sentences): ${testScore?.toFixed(4)}`);
+          }
+        } catch (scoreErr) {
+          console.log(`   ⚠️ Test score failed: ${scoreErr.message}`);
+        }
+      }
     } catch (connectErr) {
       console.log(`   ❌ SimCSE API not reachable: ${connectErr.message}`);
-      return NextResponse.json({
-        simcseUrl,
-        isConfigured: !!process.env.NEXT_PUBLIC_SIMCSE_API_URL,
-        reachable: false,
-        error: connectErr.message,
-        environment: process.env.NODE_ENV,
-        message: 'SimCSE API not available - using fallback Jaccard similarity'
-      }, { status: 200 });
+      errorMessage = connectErr.message;
     }
+    
+    return NextResponse.json({
+      simcseUrl,
+      isConfigured: !!process.env.NEXT_PUBLIC_SIMCSE_API_URL,
+      reachable,
+      testScore,
+      error: errorMessage || undefined,
+      environment: process.env.NODE_ENV,
+      recommendation: !reachable ? 'Start SimCSE server with: python simcse-api/run_server.py' : 'Server is running correctly'
+    });
   } catch (error) {
     console.error('Diagnostic error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
