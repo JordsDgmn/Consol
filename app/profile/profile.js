@@ -154,24 +154,26 @@ export default function ProfilePage() {
 
   if (selectedRow && selectedNoteId) {
     if (viewMode === 'allSessions') {
-      lineChartData =
-        (groupedData.allSessions[selectedNoteId] || []).map((s, i) => ({
-          id: s.id,
-          similarity: s.similarity,
-          trial: i + 1,
-          created_at: s.created_at,
-        }));
+      const sessionsForNote = (groupedData.allSessions[selectedNoteId] || []);
+      // Reverse to show chronological order (oldest first)
+      lineChartData = [...sessionsForNote].reverse().map((s, i) => ({
+        id: s.id,
+        similarity: s.similarity,
+        trial: i + 1,
+        created_at: s.created_at,
+      }));
     } else {
       const group = (groupedData.sessionOnly[selectedNoteId] || []).find(g =>
         g.some(sess => sess.id === selectedRow.id)
       );
-      lineChartData =
-        (group || []).map((s, i) => ({
-          id: s.id,
-          similarity: s.similarity,
-          trial: i + 1,
-          created_at: s.created_at,
-        }));
+      const sessionsInGroup = (group || []);
+      // Reverse to show chronological order (oldest first)
+      lineChartData = [...sessionsInGroup].reverse().map((s, i) => ({
+        id: s.id,
+        similarity: s.similarity,
+        trial: i + 1,
+        created_at: s.created_at,
+      }));
     }
   }
 

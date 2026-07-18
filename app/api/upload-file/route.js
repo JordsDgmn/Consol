@@ -182,8 +182,5 @@ export async function POST(request) {
   }
 }
 
-export const config = {
-  maxDuration: 60,
-};
-
+export const maxDuration = 60;
 export const runtime = 'nodejs';
